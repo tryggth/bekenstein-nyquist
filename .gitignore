@@ -4,8 +4,9 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Lean 4 / Lake build cache
+# Lean 4 / Lake build cache & isolated worktrees
 .lake/
+.worktrees/
 
 # LaTeX auxiliary files
 *.aux

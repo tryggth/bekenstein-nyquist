@@ -200,8 +200,10 @@ def test_lean4_phase_a_physics_extensions_no_sorrys(
 
     no_block_comments = re.sub(r"/-.*?-/", "", content, flags=re.DOTALL)
     no_comments = re.sub(r"--.*$", "", no_block_comments, flags=re.MULTILINE)
-    for forbidden in ("sorry", "admit", "axiom "):
-        assert forbidden not in no_comments, f"Found '{forbidden}' in {lean_filename}"
+    for forbidden in ("sorry", "admit", "axiom"):
+        assert not re.search(rf"\b{forbidden}\b", no_comments), (
+            f"Found '{forbidden}' in {lean_filename}"
+        )
 
     for ident in required_identifiers:
         assert ident in no_comments, f"Missing Lean 4 identifier '{ident}' in {lean_filename}"
@@ -217,3 +219,69 @@ def test_lean4_phase_a_physics_extensions_no_sorrys(
         )
         assert proc.returncode == 0, f"Lean compile failed for {lean_filename}:\n{proc.stdout}\n{proc.stderr}"
         assert proc.stdout.strip() == "", f"Unexpected Lean warnings in {lean_filename}:\n{proc.stdout}"
+
+
+@pytest.mark.parametrize(
+    "lean_filename,olean_name,required_identifiers",
+    [
+        (
+            "PhyslibHiggsBridge.lean",
+            "PhyslibHiggsBridge.olean",
+            [
+                "Physlib.Particles.StandardModel.HiggsBoson.Potential",
+                "toPhyslibPotential",
+                "toPhyslibPotential_toFun_eq_nyquistEffectivePotential",
+                "subNyquist_physlib_isMinOn_iff_zero",
+                "superNyquist_physlib_isMinOn_iff_condensate",
+                "superNyquist_physlib_horizon_restoration",
+            ],
+        ),
+        (
+            "QuantumInfoClockBridge.lean",
+            "QuantumInfoClockBridge.olean",
+            [
+                "QuantumInfo.Channels.CPTP",
+                "QuantumInfo.Entropy.VonNeumann",
+                "bipartiteUnitaryChannel",
+                "bipartiteUnitaryChannel_isUnitary",
+                "givensRotorCPTP",
+                "givensRotorCPTP_isUnitary",
+                "milestone4TripartiteCPTP",
+                "milestone4TripartiteCPTP_isUnitary",
+                "reducedSpatialFluidChannel",
+                "reducedSpatialFluidChannel_tracePreserving",
+                "spatialChannel_admits_unitary_purification",
+                "bipartite_pure_global_entropy_zero",
+                "spatial_shock_entropy_eq_clock_entropy",
+                "bipartite_pure_mutual_info_eq_two_mul_spatial_entropy",
+            ],
+        ),
+    ],
+)
+def test_lean4_phase_b_upstream_physlib_bridges(
+    lean_filename: str, olean_name: str, required_identifiers: list[str]
+) -> None:
+    from pathlib import Path
+    import re
+
+    repo_root = Path(__file__).resolve().parent.parent
+    lean_path = repo_root / lean_filename
+    assert lean_path.exists(), f"Missing Phase B Lean 4 file: {lean_filename}"
+    content = lean_path.read_text(encoding="utf-8")
+
+    no_block_comments = re.sub(r"/-.*?-/", "", content, flags=re.DOTALL)
+    no_comments = re.sub(r"--.*$", "", no_block_comments, flags=re.MULTILINE)
+    for forbidden in ("sorry", "admit", "axiom"):
+        assert not re.search(rf"\b{forbidden}\b", no_comments), (
+            f"Found '{forbidden}' in {lean_filename}"
+        )
+
+    for ident in required_identifiers:
+        assert ident in no_comments, f"Missing Lean 4 identifier '{ident}' in {lean_filename}"
+
+    olean_path = (
+        repo_root / ".worktrees" / "physlib-test" / ".lake" / "build" / "lib" / "lean" / olean_name
+    )
+    if olean_path.exists():
+        header = olean_path.read_bytes()[:5]
+        assert header == b"olean", f"Invalid .olean header for {olean_name}: {header!r}"
