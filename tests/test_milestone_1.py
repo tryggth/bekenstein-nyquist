@@ -136,3 +136,84 @@ def test_lean4_formalization_complete_no_sorrys() -> None:
         )
         assert proc.returncode == 0, f"Lean compile failed:\n{proc.stdout}\n{proc.stderr}"
         assert proc.stdout.strip() == "", f"Unexpected Lean warnings:\n{proc.stdout}"
+
+
+@pytest.mark.parametrize(
+    "lean_filename,required_identifiers",
+    [
+        (
+            "NyquistRotorGates.lean",
+            [
+                "givensRotor_mem_unitaryGroup",
+                "givensRotor_isElementaryClockGate",
+                "givensRotor_in_phase_mul",
+                "givensRotor_in_phase_double",
+                "givensRotor_anti_phase_mul_eq_one",
+                "givensRotor_ramsey_fringe_entry",
+                "pauli_saturation_reflection",
+                "pauli_exclusion_blockade_ker_finrank",
+                "stage1UVStabilizer_mem_unitaryGroup",
+                "stage2MeanReadback_preserves_uv_mode",
+                "stage2MeanReadback_mem_unitaryGroup",
+                "milestone4TripartiteRouter_mem_unitaryGroup",
+                "spatial_compression_add_clock_leakage_eq_proj",
+            ],
+        ),
+        (
+            "NyquistHiggsDuality.lean",
+            [
+                "complete_square",
+                "pos_𝓵_lower_bound",
+                "minimum_iff_normSq_eq",
+                "saturation_linear_relaxation",
+                "subNyquist_unique_minimum_zero",
+                "superNyquist_condensate_minimum",
+                "superNyquist_horizon_restoration",
+                "quarticCoupling_cutoff_independent",
+            ],
+        ),
+        (
+            "NyquistGaugeTransport.lean",
+            [
+                "cayleyTransform_mul_conjTranspose_self",
+                "cayleyTransform_mem_unitaryGroup",
+                "splitFormAdvection_skewHermitian",
+                "covariantClockAdvection_skewHermitian",
+                "twoPathHolonomy_gauge_invariant",
+                "wilsonLoop3_gauge_invariant",
+                "covariantClockAdvection_gauge_equivariant",
+            ],
+        ),
+    ],
+)
+def test_lean4_phase_a_physics_extensions_no_sorrys(
+    lean_filename: str, required_identifiers: list[str]
+) -> None:
+    from pathlib import Path
+    import re
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parent.parent
+    lean_path = repo_root / lean_filename
+    assert lean_path.exists(), f"Missing Lean 4 file: {lean_filename}"
+    content = lean_path.read_text(encoding="utf-8")
+
+    no_block_comments = re.sub(r"/-.*?-/", "", content, flags=re.DOTALL)
+    no_comments = re.sub(r"--.*$", "", no_block_comments, flags=re.MULTILINE)
+    for forbidden in ("sorry", "admit", "axiom "):
+        assert forbidden not in no_comments, f"Found '{forbidden}' in {lean_filename}"
+
+    for ident in required_identifiers:
+        assert ident in no_comments, f"Missing Lean 4 identifier '{ident}' in {lean_filename}"
+
+    lake_bin = Path("/home/tryggth2009/.elan/bin/lake")
+    if lake_bin.exists():
+        proc = subprocess.run(
+            [str(lake_bin), "env", "lean", lean_filename],
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert proc.returncode == 0, f"Lean compile failed for {lean_filename}:\n{proc.stdout}\n{proc.stderr}"
+        assert proc.stdout.strip() == "", f"Unexpected Lean warnings in {lean_filename}:\n{proc.stdout}"

@@ -1,7 +1,7 @@
 name = "bekenstein_nyquist"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["UnitaryBandwidthDepth"]
+defaultTargets = ["UnitaryBandwidthDepth", "NyquistRotorGates", "NyquistHiggsDuality", "NyquistGaugeTransport"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -14,3 +14,12 @@ rev = "v4.31.0"
 
 [[lean_lib]]
 name = "UnitaryBandwidthDepth"
+
+[[lean_lib]]
+name = "NyquistRotorGates"
+
+[[lean_lib]]
+name = "NyquistHiggsDuality"
+
+[[lean_lib]]
+name = "NyquistGaugeTransport"
