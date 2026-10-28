@@ -4,7 +4,7 @@ Formal Lean 4 verification, 1+1D unitary hydrodynamic rotor simulations, and mon
 
 ## Repository Structure
 
-- **[`bekenstein_nyquist_monograph.pdf`](bekenstein_nyquist_monograph.pdf)** & **[`bekenstein_nyquist_monograph.tex`](bekenstein_nyquist_monograph.tex)** — Complete 16-page monograph (*Theoretical Architecture, Axiomatic Foundations, and Formal Verification of the Bekenstein–Nyquist Shock Worldline Conjecture*).
+- **[`bekenstein_nyquist_monograph.pdf`](bekenstein_nyquist_monograph.pdf)** & **[`bekenstein_nyquist_monograph.tex`](bekenstein_nyquist_monograph.tex)** — Complete 18-page monograph (*Theoretical Architecture, Axiomatic Foundations, and Formal Verification of the Bekenstein–Nyquist Shock Worldline Conjecture*).
 - **[`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean)** — Machine-checked Lean 4 formalization of the finite-dimensional bandwidth–depth tradeoff ($D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$) with zero `sorry` axioms.
 - **[`NyquistRotorGates.lean`](NyquistRotorGates.lean)** — Machine-checked Lean 4 formalization of Phase A Test A1: exact $\mathrm{SU}(2)$ Givens rotor gates, in-phase constructive clock-mass creation ($G_0(\vartheta_2)G_0(\vartheta_1) = G_0(\vartheta_1 + \vartheta_2)$), anti-phase $\pi$-rotor negation gate ($G_\pi(\vartheta)G_0(\vartheta) = I_2$), Ramsey fringe formula, Pauli exclusion blockade, and Milestone 4 tripartite 3-mode Haar router unitarity.
 - **[`NyquistHiggsDuality.lean`](NyquistHiggsDuality.lean)** — Machine-checked Lean 4 formalization of Phase A Test A2: Bekenstein–Nyquist saturation functional $\Sigma_0(x,t) = 1 - \frac{F_0(x,t)}{\Lambda_{\text{Bek}}\nu_{\text{ML}}}$, Physlib-compatible Mexican-hat Higgs potential bridge (`complete_square`, `pos_𝓵_lower_bound`, `minimum_iff_normSq_eq`), spontaneous clock-condensate symmetry breaking for $\Sigma_0 < 0$, and horizon restoration.
@@ -26,6 +26,6 @@ Formal Lean 4 verification, 1+1D unitary hydrodynamic rotor simulations, and mon
 # Build and verify all 4 Lean 4 modules (UnitaryBandwidthDepth, NyquistRotorGates, NyquistHiggsDuality, NyquistGaugeTransport)
 lake build
 
-# Run the 43-test Python & Lean 4 verification suite
+# Run the 45-test Python & Lean 4 verification suite
 ./.venv/bin/pytest -v
 ```

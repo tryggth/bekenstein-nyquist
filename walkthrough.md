@@ -17,18 +17,26 @@ All four progressive computational toy models and the finite-dimensional Lean 4 
 
 ---
 
-## Milestone 1: Minimalist Algebraic Toy Model & Complete Lean 4 Formalization (Phase 1 & Phase 5)
+## Milestone 1: Minimalist Algebraic Toy Model & Complete Lean 4 Formalization (Phase 1, Phase 5, Phase A & Phase B)
 
 - **Implementation:** [toy_model_1_unitary_leakage.py](toy_model_1_unitary_leakage.py)
-- **Lean 4 Formalization:** [UnitaryBandwidthDepth.lean](UnitaryBandwidthDepth.lean)
-- **Unit & Falsification Tests:** [test_milestone_1.py](tests/test_milestone_1.py)
+- **Lean 4 Core & Physics Extensions (6 Modules, `0 sorry`):**
+  - [UnitaryBandwidthDepth.lean](UnitaryBandwidthDepth.lean) — Phase 5 core bandwidth–depth tradeoff ($D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$).
+  - [NyquistRotorGates.lean](NyquistRotorGates.lean) — Phase A Test A1: $\mathrm{SU}(2)$ Givens rotors, constructive in-phase angle addition, anti-phase $\pi$-rotor $\neg$ gate, Ramsey fringe formula, Pauli exclusion blockade, and Milestone 4 tripartite Haar router unitarity.
+  - [NyquistHiggsDuality.lean](NyquistHiggsDuality.lean) — Phase A Test A2: Bekenstein–Nyquist saturation functional $\Sigma_0$, Mexican-hat potential completion of the square, spontaneous clock-condensate symmetry breaking ($|c_{\text{eq}}|^2 = -\Sigma_0/(2\lambda)$), and sonic-horizon restoration ($\Sigma_{\text{eff}} = 0$).
+  - [NyquistGaugeTransport.lean](NyquistGaugeTransport.lean) — Phase A Test A3: unconditional unitarity of the Crank–Nicolson / Cayley transform (`cayleyTransform_mem_unitaryGroup`), skew-Hermiticity of split-form Burgers and gauge-covariant clock advection, and local $\mathrm{U}(1)$ Wilson holonomy invariance.
+  - [PhyslibHiggsBridge.lean](PhyslibHiggsBridge.lean) — Phase B direct upstream bridge to `Physlib.Particles.StandardModel.HiggsBoson.Potential` (`leanprover-community/physlib`) over smooth sections on 4D `SpaceTime`.
+  - [QuantumInfoClockBridge.lean](QuantumInfoClockBridge.lean) — Phase B direct upstream bridge to `QuantumInfo.Channels.CPTP` and `QuantumInfo.Entropy.VonNeumann` (`leanprover-community/physlib`), certifying `CPTPMap` purification and $S_{\text{vN}}(\rho_{\Lambda}) = S_{\text{vN}}(\rho_C)$ (`Sᵥₙ_of_partial_eq`).
+- **Unit & Falsification Tests (`45/45` passing):** [test_milestone_1.py](tests/test_milestone_1.py)
 
 > [!IMPORTANT]
-> **Phase 5 Lean 4 Formalization Complete (`0 sorry`, `0 warnings`):**
-> [UnitaryBandwidthDepth.lean](UnitaryBandwidthDepth.lean) compiles cleanly under Lean 4 (`v4.33.1` + Mathlib) via `lake env lean UnitaryBandwidthDepth.lean`, formally proving:
-> - [`IsElementaryClockGate`](UnitaryBandwidthDepth.lean#L97-L101) & [`elementaryClockGate_forwardLeakage_rank_le_one`](UnitaryBandwidthDepth.lean#L121-L132): 1D clock wire support implies $\mathrm{rank}((I - P_{\Lambda}) W_k P_{\Lambda}) \le 1$ via rank factorization through `Fin 1`.
-> - [`commutator_rank_eq_add_leakage_rank`](UnitaryBandwidthDepth.lean#L173-L234) & [`unitary_commutator_rank_eq_two_mul_forwardLeakage_rank`](UnitaryBandwidthDepth.lean#L368-L386): Unitary Gram identities $U_{11}^\dagger U_{11} + U_{21}^\dagger U_{21} = I_d$ and $U_{11} U_{11}^\dagger + U_{12} U_{12}^\dagger = I_d$ imply $\mathrm{rank}(A) = \mathrm{rank}(B) = r$ and $\mathrm{rank}([P_{\Lambda}, U]) = 2r$.
-> - [`unitary_bandwidth_depth_tradeoff`](UnitaryBandwidthDepth.lean#L244-L273) & [`unitary_bandwidth_depth_tradeoff_from_commutator_rank`](UnitaryBandwidthDepth.lean#L397-L429): Both isometric and block-compression dilations satisfy $2 \cdot \mathrm{length}(\text{gates}) \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) = 2r$.
+> **Phase 5, Phase A & Phase B Lean 4 Formalizations Complete (`6 modules`, `0 sorry`, `0 warnings`, `45/45` pytest checks):**
+> All six Lean 4 modules compile cleanly under Lean 4 (`v4.33.1` + Mathlib + `leanprover-community/physlib`), formally proving:
+> - [`IsElementaryClockGate`](UnitaryBandwidthDepth.lean#L59-L64) & [`rank_forwardLeakage_le_one_of_isElementaryClockGate`](UnitaryBandwidthDepth.lean#L98-L119): 1D clock wire support implies $\mathrm{rank}((I - P_{\Lambda}) W_k P_{\Lambda}) \le 1$ via rank factorization through `Fin 1`.
+> - [`forwardLeakage_rank_eq_reverseLeakage_rank`](UnitaryBandwidthDepth.lean#L247-L254) & [`commutator_rank_eq_two_mul_forwardLeakage_rank`](UnitaryBandwidthDepth.lean#L276-L284): Unitary Gram identities $U_{11}^\dagger U_{11} + U_{21}^\dagger U_{21} = I_d$ and $U_{11} U_{11}^\dagger + U_{12} U_{12}^\dagger = I_d$ imply $\mathrm{rank}(A) = \mathrm{rank}(B) = r$ and $\mathrm{rank}([P_{\Lambda}, U]) = 2r$.
+> - [`unitary_bandwidth_depth_tradeoff_compression`](UnitaryBandwidthDepth.lean#L305-L315) & [`unitary_bandwidth_depth_tradeoff_clock_wires`](UnitaryBandwidthDepth.lean#L325-L337): Both isometric and block-compression dilations satisfy $2 \cdot \mathrm{length}(\text{gates}) \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) = 2r$.
+> - [`givensRotor_anti_phase_mul_eq_one`](NyquistRotorGates.lean#L218-L229), [`stage2MeanReadback_preserves_uv_mode`](NyquistRotorGates.lean#L318-L320), & [`milestone4TripartiteRouter_mem_unitaryGroup`](NyquistRotorGates.lean#L351-L355): Anti-phase $\pi$-rotor negation gate and UV-spike-free tripartite Haar collision router.
+> - [`superNyquist_condensate_minimum`](NyquistHiggsDuality.lean#L163-L176), [`superNyquist_physlib_isMinOn_iff_condensate`](PhyslibHiggsBridge.lean#L62-L68), & [`spatial_shock_entropy_eq_clock_entropy`](QuantumInfoClockBridge.lean#L136-L139): Spontaneous clock-condensate formation in `Physlib` and exact equality between apparent spatial shock entropy and worldline clock entanglement entropy in `QuantumInfo`.
 
 ---
 
