@@ -4,7 +4,7 @@
 
 At the end of the NotebookLM source **`BNSWC Axioms and Monograph Discrepancy`**, five extensions to our Phase 5 formalization ([`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean)) are proposed using the Lean 4 physics ecosystem:
 1. **Landau–Ginzburg–Higgs & Horizon Criticality Duality** (`Physlib.Particles.StandardModel.HiggsBoson.Potential`)
-2. **$\mathrm{SU}(2)$ Givens Rotors, $\pi$-Rotor Negation Gate & Pauli Exclusion Blockade** (`Physlib` Spinor/$\mathrm{SU}(2)$ + `Mathlib.LinearAlgebra.UnitaryGroup`)
+2. **$\mathrm{SU}(2)$ Givens Rotors, $\pi$-Rotor Negation Gate & Pauli Exclusion Blockade** (`Physlib` Spinor / $\mathrm{SU}(2)$ + `Mathlib.LinearAlgebra.UnitaryGroup`)
 3. **Full Quantum Channels, Partial Traces & Apparent Shock Entropy** (`QuantumInfo` / `QICLean`)
 4. **1D Lattice Locality, Matrix Product Unitaries & Emergent Gauge Transport** (`TNLean`)
 5. **Continuum PDE Blueprint Specifications** (`Physlib.Meta.Informal`)
@@ -44,7 +44,9 @@ To determine whether we can actually build these extensions on top of our existi
   * In our monograph (Section 4.5.3, Eq. 20), $V_{\text{eff}}(c) = +\Sigma_0 |c|^2 + \lambda |c|^4$ with $\Sigma_0(x,t) = 1 - \frac{F_0(x,t)}{\Lambda_{\text{Bek}}\nu_{\text{ML}}}$.
   * In `Physlib`, `P.toFun` puts a **minus sign** on `P.μ2` (`- P.μ2 * ‖φ‖_H^2 x + ...`).
   * Therefore, the formal bridge definition must set:
+
     $$\texttt{P.μ2} := -\Sigma_0(x,t) = \frac{F_0(x,t)}{\Lambda_{\text{Bek}}\nu_{\text{ML}}} - 1, \qquad \texttt{P.𝓵} := \lambda = \frac{\kappa}{2\Lambda_{\text{Bek}}\nu_{\text{ML}}} > 0.$$
+
   * Under this identification, the super-Nyquist shock core ($\Sigma_0 < 0 \iff \texttt{P.μ2} > 0$) maps directly to `Physlib`'s symmetry-breaking regime, where `quadDiscrim_eq_zero_iff_normSq` gives the exact condensate norm squared $\|c_{\text{eq}}\|^2 = \texttt{P.μ2} / (2\,\texttt{P.𝓵}) = -\Sigma_0 / (2\lambda)$, and the effective saturation functional relaxes to the critical horizon $\Sigma(|c_{\text{eq}}|) = \Sigma_0 + 2\lambda |c_{\text{eq}}|^2 = 0$.
 
 ---
@@ -54,9 +56,13 @@ To determine whether we can actually build these extensions on top of our existi
 * **Connection to [`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean):**
   * Extends `BlockIdx d m`, [`IsElementaryClockGate`](UnitaryBandwidthDepth.lean#L482-L485), and [`rank_forwardLeakage_le_one_of_isElementaryClockGate`](UnitaryBandwidthDepth.lean#L521-L526).
   * Also closes the **Milestone 4 Formalization Gap** noted in `Analyzing Bekenstein–Nyquist Shock Worldline Implications` (Part II, Section 6): [`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean) currently partitions modes into two blocks (`Fin d ⊕ Fin m`), whereas Milestone 4 ([`toy_model_4_shock_collision_gate.py`](toy_model_4_shock_collision_gate.py#L162-L295)) routes energy across **three orthogonal channels** on each active bond:
-    $$\mathcal{H}_{\text{bond}} = V_{\text{IR}}(\bar{u}_b) \oplus V_{\text{UV}}(u_{b,\text{UV}}) \oplus \mathcal{C}_{\text{slot}}(c_{\text{slot}}).$$
+
+    ```math
+    \mathcal{H}_{\text{bond}} = V_{\text{IR}}(\bar{u}_b) \oplus V_{\text{UV}}(u_{b,\text{UV}}) \oplus \mathcal{C}_{\text{slot}}(c_{\text{slot}}).
+    ```
+
 * **Concrete Theorems to Formalize:**
-  1. `givensRotor_mem_unitaryGroup`: The $2 \times 2$ complex rotor $G(\vartheta, \phi) = \begin{pmatrix} \cos\vartheta & -e^{-i\phi}\sin\vartheta \\ e^{i\phi}\sin\vartheta & \cos\vartheta \end{pmatrix}$ belongs to `Matrix.unitaryGroup (Fin 2) ℂ`.
+  1. `givensRotor_mem_unitaryGroup`: The $2 \times 2$ complex rotor $`G(\vartheta, \phi) = \begin{pmatrix} \cos\vartheta & -e^{-i\phi}\sin\vartheta \\ e^{i\phi}\sin\vartheta & \cos\vartheta \end{pmatrix}`$ belongs to `Matrix.unitaryGroup (Fin 2) ℂ`.
   2. `givensRotor_in_phase_mul`: $G(\vartheta, 0) \cdot G(\vartheta, 0) = G(2\vartheta, 0)$ (constructive clock-mass creation at $\Delta\phi = 0$).
   3. `givensRotor_anti_phase_mul_eq_one`: $G(\vartheta, \pi) \cdot G(\vartheta, 0) = 1$ (coherent clock-mass annihilation / logical $\neg$ gate at $\Delta\phi = \pi$ evading the Monotone Planar CVP $\mathrm{NC}^3$ trap).
   4. `pauli_exclusion_blockade`: When a 1D clock wire (`IsElementaryClockGate`) reaches saturation ($\vartheta_1 = \pi/2$, transferring $|u_{\text{UV}}|^2 \to |c|^2 = 1$), the remaining spatial UV capacity of that wire is zero.
@@ -71,11 +77,11 @@ To determine whether we can actually build these extensions on top of our existi
   * `MState d` (mixed density states on finite type `d`), `MState.traceLeft`, `MState.traceRight`, `MState.pure`, `MState.purify`.
   * `Sᵥₙ (ρ : MState d) : ℝ := Hₛ ρ.spectrum` (von Neumann entropy), `qConditionalEnt`, `qMutualInfo`, `coherentInfo`.
 * **Architectural Bridge Required (Direct Sum vs. Tensor Product):**
-  * [`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean) represents the single-particle / field-amplitude Hilbert space as a **direct sum** `BlockIdx d m := Fin d ⊕ Fin m` ($\mathcal{H}_{\text{tot}} = \mathcal{H}_{\Lambda} \oplus \mathcal{H}_{\text{clock}}$).
+  * [`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean) represents the single-particle / field-amplitude Hilbert space as a **direct sum** `BlockIdx d m := Fin d ⊕ Fin m` ($`\mathcal{H}_{\text{tot}} = \mathcal{H}_{\Lambda} \oplus \mathcal{H}_{\text{clock}}`$).
   * `QuantumInfo` defines `MState.traceLeft` and `MState.traceRight` on a **bipartite tensor product** `MState (dA × dB)`.
   * **Two-Step Formalization Strategy:**
-    * **Step 3A (Direct-Sum Purity & Norm-Leakage Identity on `BlockIdx d m`):** Using [`forwardLeakage_conjTranspose_mul_self`](UnitaryBandwidthDepth.lean#L225-L245) ($A^\dagger A = P - (P U P)^\dagger (P U P)$), prove that for any bandlimited state $\psi$ ($P \psi = \psi$), the spatial norm loss $1 - \|P U \psi\|_2^2$ equals the clock fiber norm $\|A \psi\|_2^2 = \|(1 - P) U P \psi\|_2^2$, and the projected purity $\mathrm{Tr}((P U \rho U^\dagger P)^2)$ drops strictly below $1$ iff $A \rho \ne 0$.
-    * **Step 3B (Stinespring Tensor Dilation in `QuantumInfo`):** Map the rank-$r$ block contraction $T = P_{\Lambda} U_{\text{nl}} P_{\Lambda}$ to its isometric Stinespring dilation on `MState (Fin d × Fin (r + 1))` and use `Sᵥₙ` from `QuantumInfo.Entropy.VonNeumann` to bound the reduced spatial von Neumann entropy by the active clock-wire capacity.
+    * **Step 3A (Direct-Sum Purity & Norm-Leakage Identity on `BlockIdx d m`):** Using [`forwardLeakage_conjTranspose_mul_self`](UnitaryBandwidthDepth.lean#L225-L245) ($A^\dagger A = P - (P U P)^\dagger (P U P){}$), prove that for any bandlimited state $\psi$ ($P \psi = \psi$), the spatial norm loss $1 - \|P U \psi\|_2^2$ equals the clock fiber norm $\|A \psi\|_2^2 = \|(1 - P) U P \psi\|_2^2$, and the projected purity $\mathrm{Tr}((P U \rho U^\dagger P)^2)$ drops strictly below $1$ iff $A \rho \ne 0$.
+    * **Step 3B (Stinespring Tensor Dilation in `QuantumInfo`):** Map the $\text{rank-}r$ block contraction $T = P_{\Lambda} U_{\text{nl}} P_{\Lambda}$ to its isometric Stinespring dilation on `MState (Fin d × Fin (r + 1))` and use `Sᵥₙ` from `QuantumInfo.Entropy.VonNeumann` to bound the reduced spatial von Neumann entropy by the active clock-wire capacity.
 
 ---
 
@@ -87,10 +93,14 @@ To determine whether we can actually build these extensions on top of our existi
   * However, the **Covariant Clock Advection & Wilson Loop Holonomy** equations derived in `Analyzing Bekenstein–Nyquist Shock Worldline Implications` (Part II, Section 5) are finite-dimensional matrix identities on `Fin N_x` that can be proved **directly in Mathlib** with zero external dependencies!
 * **Concrete Theorems to Formalize on `Fin N_x`:**
   1. `covariantClockAdvection_conjTranspose_eq_neg`: For any spatial velocity profile $v : \mathrm{Fin}\, N_x \to \mathbb{R}$ and any unitary link connection $U_{\text{link}} : \mathrm{Fin}\, N_x \to \mathrm{U}(1)$, the discrete gauge-covariant clock advection matrix
-     $$[D_x^A c]_j = \frac{1}{4\Delta x}\Big((v_j + v_{j+1}) U_{j,j+1} c_{j+1} - (v_{j-1} + v_j) \overline{U_{j-1,j}} c_{j-1}\Big)$$
+
+     ```math
+     [D_x^A c]_j = \frac{1}{4\Delta x}\Big((v_j + v_{j+1}) U_{j,j+1} c_{j+1} - (v_{j-1} + v_j) \overline{U_{j-1,j}} c_{j-1}\Big)
+     ```
+
      is strictly skew-Hermitian: $(D_x^A)^\dagger = -D_x^A$.
   2. `cayley_of_skewHermitian_mem_unitaryGroup`: For any skew-Hermitian matrix $D^\dagger = -D$ and invertible $I + \frac{\Delta t}{2} D$, the Cayley transform $\mathcal{U}_{\text{clock}}(\Delta t) = (I + \frac{\Delta t}{2} D)^{-1} (I - \frac{\Delta t}{2} D)$ is unitary (`∈ Matrix.unitaryGroup`), proving exact machine-precision unitarity of both our bulk spatial Cayley step ([`_apply_unitary_cayley_step`](toy_model_2_nyquist_rotor_pde.py#L280-L304)) and co-moving clock transport.
-  3. `wilsonLoop_gauge_invariant`: Under a local clock-slot phase rotation $c_j \mapsto e^{i\alpha_j} c_j$ and link transformation $U_{j,j+1} \mapsto e^{i\alpha_j} U_{j,j+1} e^{-i\alpha_{j+1}}$, the composite norm $\|u\|_2^2 + \sum_j |c_j|^2$ and the closed Wilson-loop holonomy $\prod_{j} U_{j,j+1}$ at a two-shock collision vertex are strictly invariant.
+  3. `wilsonLoop_gauge_invariant`: Under a local clock-slot phase rotation $c_j \mapsto e^{i\alpha_j} c_j$ and link transformation $U_{j,j+1} \mapsto e^{i\alpha_j} U_{j,j+1} e^{-i\alpha_{j+1}}$, the composite norm $`\|u\|_2^2 + \sum_j |c_j|^2`$ and the closed Wilson-loop holonomy $`\prod_{j} U_{j,j+1}`$ at a two-shock collision vertex are strictly invariant.
 
 ---
 
@@ -130,14 +140,14 @@ flowchart TD
 
 1. **Test A1 — Create `NyquistRotorGates.lean`:**
    - Import `UnitaryBandwidthDepth`.
-   - Formalize the $2 \times 2$ Givens rotor $G(\vartheta, \phi)$, prove $G(\vartheta, 0)G(\vartheta, 0) = G(2\vartheta, 0)$ and $G(\vartheta, \pi)G(\vartheta, 0) = I_2$, prove the Pauli Exclusion Blockade at $\vartheta = \pi/2$ for `IsElementaryClockGate`, and formalize the 3-mode orthogonal Haar router $(\bar{u}_b, u_{b,\text{UV}}, c_{\text{slot}})$ from Milestone 4.
+   - Formalize the $2 \times 2$ Givens rotor $G(\vartheta, \phi)$, prove $G(\vartheta, 0)G(\vartheta, 0) = G(2\vartheta, 0)$ and $G(\vartheta, \pi)G(\vartheta, 0) = I_2$, prove the Pauli Exclusion Blockade at $\vartheta = \pi/2$ for `IsElementaryClockGate`, and formalize the 3-mode orthogonal Haar router $`(\bar{u}_b, u_{b,\text{UV}}, c_{\text{slot}})`$ from Milestone 4.
    - **Verification Command:** `lake env lean NyquistRotorGates.lean`
 2. **Test A2 — Create `NyquistHiggsDuality.lean`:**
    - Import `UnitaryBandwidthDepth`.
    - Define `NyquistEffectivePotential (Σ₀ λ c_normSq : ℝ) : ℝ := Σ₀ * c_normSq + λ * c_normSq ^ 2` alongside the `Physlib`-compatible parametrization `μ2 := -Σ₀`.
    - Prove the three horizon-criticality theorems:
      - `subNyquist_unique_minimum_zero` ($\Sigma_0 > 0, \lambda > 0 \implies \forall c^2 > 0, V_{\text{eff}}(c^2) > V_{\text{eff}}(0) = 0$).
-     - `superNyquist_condensate_minimum` ($\Sigma_0 < 0, \lambda > 0 \implies V_{\text{eff}}(c^2) = \lambda (c^2 - (-\Sigma_0 / 2\lambda))^2 - \Sigma_0^2 / (4\lambda)$).
+     - `superNyquist_condensate_minimum` ($\Sigma_0 < 0, \lambda > 0 \implies V_{\text{eff}}(c^2) = \lambda (c^2 - (-\Sigma_0 / 2\lambda))^2 - \Sigma_0^2 / (4\lambda){}$).
      - `superNyquist_horizon_restoration` ($\Sigma(|c_{\text{eq}}|^2) = \Sigma_0 + 2\lambda (-\Sigma_0 / 2\lambda) = 0$).
    - **Verification Command:** `lake env lean NyquistHiggsDuality.lean`
 3. **Test A3 — Create `NyquistGaugeTransport.lean`:**
