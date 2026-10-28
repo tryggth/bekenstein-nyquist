@@ -2,6 +2,17 @@
 
 Formal Lean 4 verification, 1+1D unitary hydrodynamic rotor simulations, and monograph for the **Bekenstein–Nyquist Shock Worldline Conjecture (BNSWC)**.
 
+## Foundational Premises (Axioms A1–A4)
+
+1. **Axiom A1 — Bekenstein Spatial Bandlimitation ($P_{\Lambda}$):** Observable spatial fields reside in a Paley–Wiener subspace $`V_{\Lambda} = P_{\Lambda}\mathcal{H}_{\text{tot}} = PW_{\Lambda_{\text{Bek}}}(\mathbb{R})`$ defined by an idempotent, self-adjoint ultraviolet wavenumber projector $P_{\Lambda}^2 = P_{\Lambda} = P_{\Lambda}^\dagger$ with hard cutoff $|k| \le \Lambda_{\text{Bek}}$ derived from the Bekenstein bound $I_{\max} \le \frac{2\pi E R}{\hbar c \ln 2}$.
+2. **Axiom A2 — Margolus–Levitin Rate Limit on State Changes ($\nu_{\text{ML}}$):** Any local state transition coupling $V_{\Lambda}$ to an orthogonal degree of freedom proceeds through elementary rank-1 quantum channels ($\mathrm{rank}((I - P_{\Lambda}) W_k P_{\Lambda}) \le 1$) bounded by the Margolus–Levitin transition frequency $\nu_{\text{ML}} \le \frac{2E}{\pi\hbar}$.
+3. **Axiom A3 — Scale-Generating Nonlinearity ($[P_{\Lambda}, U_{\text{nl}}] \ne 0$):** Nonlinear convective steepening multiplies modes across the Brillouin boundary so the unconstrained short-time propagator $U_{\text{nl}} = \exp(\Delta t M(u))$ fails to commute with the spatial bandlimit projector $P_{\Lambda}$.
+4. **Axiom A4 — Reflectionless Local Unitarity ($U^\dagger U = I$):** Time evolution on $`\mathcal{H}_{\text{tot}}`$ is strictly unitary and causally local, forbidding both dissipative Landauer bit erasure ($`E_{\min} = n k_B T \ln 2`$) and unphysical Umklapp aliasing / Gibbs reflection at $|k| = \Lambda_{\text{Bek}}$.
+
+### From Established Axioms to Machine-Checked Theorems
+
+Once Axioms A1–A4 are locked in, the conserved trade-off between spatial bandwidth, register precision, and sequential time-stepping is derived as a strict mathematical theorem rather than assumed as an analogy. Specifically, via Stinespring and Sz.-Nagy unitary dilation, preserving unitarity ($U^\dagger U = I$) across the bandlimit projector $P_{\Lambda}$ when $[P_{\Lambda}, U_{\text{nl}}] \ne 0$ mathematically forces the existence of an orthogonal worldline clock fiber $`\mathcal{H}_{\text{clock}} = V_{\Lambda}^{\perp}`$ and bounds the minimum sequential circuit depth by $D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$. This algebraic core—along with its formal bridges to Landau–Ginzburg–Higgs criticality and quantum channels—has been machine-checked in Lean 4 ([`UnitaryBandwidthDepth.lean`](UnitaryBandwidthDepth.lean)) with zero unproven `sorry` axioms.
+
 ## Repository Structure
 
 - **[`bekenstein_nyquist_monograph.pdf`](bekenstein_nyquist_monograph.pdf)** & **[`bekenstein_nyquist_monograph.tex`](bekenstein_nyquist_monograph.tex)** — Complete 18-page monograph (*Theoretical Architecture, Axiomatic Foundations, and Formal Verification of the Bekenstein–Nyquist Shock Worldline Conjecture*).
