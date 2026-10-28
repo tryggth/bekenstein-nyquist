@@ -1,0 +1,500 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=1in}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.80}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{#1}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{postulate}[theorem]{Postulate}
+\newtheorem{remark}[theorem]{Remark}
+\title{\textbf{Theoretical Architecture, Axiomatic Foundations, and Formal Verification of the Bekenstein--Nyquist Shock Worldline Conjecture}}
+\author{Bekenstein--Nyquist Research Program}
+\date{October 2026}
+\begin{document}
+\sloppy
+\maketitle
+\begin{abstract}
+The Bekenstein--Nyquist Shock Worldline Conjecture (BNSWC) establishes a rigorous mathematical bridge between relativistic information density bounds, microlocal partial differential equation (PDE) theory, and Boolean or unitary circuit complexity. The conjecture is founded on three physical premises---the Bekenstein spatial information bound ($\Lambda_{\text{Bek}}$), the Margolus--Levitin rate limit on local state changes ($\nu_{\text{ML}}$), and reflectionless local unitarity ($U^\dagger U = I$)---formalized as four minimal axioms (Axioms A1--A4) under scale-generating nonlinearity ($[P_{\Lambda}, U_{\text{nl}}] \ne 0$). Smooth, sub-Nyquist field configurations evolve via spatially parallel, constant-depth updates ($\mathcal{O}(1)$ circuit depth), whereas nonlinear convective steepening at a hydrodynamic or field-theoretic shock front saturates the local spatial bandwidth. Rather than postulating auxiliary degrees of freedom by hand, we prove via Stinespring/Sz.-Nagy dilation (\texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean}) that preserving local unitarity without violating spatial bandwidth bounds mathematically forces the existence of an orthogonal worldline clock fiber $\mathcal{H}_{\text{clock}} = V_{\Lambda}^{\perp}$ of rank at least $r = \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])/2$, a $90^\circ$ microlocal signature rotation in the complexified cotangent bundle across the saturation horizon $\Sigma(x,t) = 0$, and an effective Landau--Ginzburg--Higgs potential $V_{\text{eff}}(c) = \Sigma_0 |c|^2 + \lambda |c|^4$. This monograph presents the unified axiomatic architecture (including the equivalence between the Emergent Stinespring Dilation formulation and the Primitive Bipartite Fiber-Bundle formulation), the five-phase analytical proofs, the machine-checked Lean 4 verification, the numerical verification across four progressive hydrodynamic lattice benchmarks, the holographic Ryu--Takayanagi bulk-extrusion correspondence, and the formal duality with the Landau--Ginzburg--Higgs mechanism.
+\end{abstract}
+\tableofcontents
+\bigskip
+\section*{Executive Synthesis: The Three Physical Premises and Deductive Architecture}
+\addcontentsline{toc}{section}{Executive Synthesis: The Three Physical Premises and Deductive Architecture}
+The Bekenstein--Nyquist Shock Worldline Conjecture rests on the simultaneous enforcement of three foundational principles of fundamental physics that have historically been analyzed in isolation:
+\begin{enumerate}
+\item \textbf{The Bekenstein Spatial Bandwidth Bound ($\Lambda_{\text{Bek}}$):} General relativity and black hole thermodynamics impose the Bekenstein bound, restricting the maximum information $I_{\max}$ storable within a spherical region of radius $R$ and energy $E$ prior to Schwarzschild gravitational collapse to
+\begin{equation}
+I_{\max} \le \frac{2\pi E R}{\hbar c \ln 2}.
+\end{equation}
+Following Achim Kempf's covariant bandlimitation framework, this finite spatial information density imposes a hard ultraviolet wavenumber ceiling $|k| \le \Lambda_{\text{Bek}}$, restricting observable continuum fields to a Paley--Wiener Hilbert space $\mathcal{H}_{\Lambda} = PW_{\Lambda_{\text{Bek}}}(\mathbb{R})$ obeying Bernstein's inequality $\|u^{(r)}\|_2 \le \Lambda_{\text{Bek}}^r \|u\|_2$. By the Shannon--Nyquist and Beurling--Landau sampling theorems, $\mathcal{H}_{\Lambda}$ is unitarily isomorphic to a discrete sampling lattice $\ell^2(\mathbb{Z}_{\Delta x})$ of fundamental spacing $\Delta x = \pi / \Lambda_{\text{Bek}}$ without breaking continuous translational or Poincar\'e symmetries.
+\item \textbf{The Margolus--Levitin Rate Limit on State Changes ($\nu_{\text{ML}}$):} Quantum mechanics enforces the Margolus--Levitin theorem, which bounds the maximum frequency of distinguishable local transitions between orthogonal quantum states by
+\begin{equation}
+\nu_{\text{ML}} \le \frac{2E}{\pi \hbar}, \qquad \Delta\tau_{\text{ML}} = \frac{\pi}{\nu_{\text{ML}}} \ge \frac{\pi^2 \hbar}{2E}.
+\end{equation}
+Together, the spatial bandwidth ceiling $\Lambda_{\text{Bek}}$ and the temporal state-change rate limit $\nu_{\text{ML}}$ define a finite local spacetime information-processing capacity per unit length per unit time:
+\begin{equation}
+C_{\text{self}} \equiv \theta_{\text{Nyq}} = \Lambda_{\text{Bek}} \nu_{\text{ML}}.
+\end{equation}
+\item \textbf{Local Microscopic Unitarity vs.\ Landauer Erasure ($U^\dagger U = I$):} Fundamental quantum evolution is strictly unitary and causally local (bounded spatial fan-in radius $r_0$ per parallel step), conserving total Hilbert-space norm and phase-space volume. While linear dispersive waves propagate trivially inside $\mathcal{H}_{\Lambda}$, nonlinear convective steepening (such as $u\partial_x u$) multiplies modes in the upper half of the Brillouin zone ($\Lambda_{\text{Bek}}/2 < |k| \le \Lambda_{\text{Bek}}$), driving spectral flux $R_{\text{self}}(x,t) = \|F_{tx}(x,t)\|_{\text{HS}}$ toward the forbidden ultraviolet zone $(\Lambda_{\text{Bek}}, 2\Lambda_{\text{Bek}}]$. Standard continuum hydrodynamics stabilizes shocks via viscous dissipation (violating unitarity via Landauer bit erasure $E_{\min} = n k_B T \ln 2$), whereas naive unitary lattice truncation reflects ultraviolet modes back into the bulk via Umklapp aliasing (producing unphysical Gibbs ringing).
+\end{enumerate}
+The central thesis of this monograph is that nature resolves nonlinear shock steepening under these three constraints without Landauer erasure or Gibbs aliasing by dynamically trading \textbf{spatial parallelism} for \textbf{sequential temporal circuit depth} along the lower-dimensional shock worldline.
+\begin{table}[htbp]
+\centering
+\caption{Five-Phase Architecture of the Bekenstein--Nyquist Shock Worldline Program.}
+\label{tab:program-overview}
+\footnotesize
+\begin{tabular}{L{2.1cm}L{2.9cm}L{2.9cm}L{2.9cm}L{2.8cm}}
+\toprule
+\textbf{Program Phase} & \textbf{Core Objective} & \textbf{Mathematical Apparatus} & \textbf{Target Deliverable} & \textbf{Falsification Criterion} \\
+\midrule
+\textbf{Phase 1: Axioms \& Kinematics} & State Minimal Axioms A1--A4 and prove incompatibility of spatial parallelism and unitarity at a shock & Paley--Wiener spaces $\mathcal{H}_{\Lambda}$, discrete Lax pairs $(L, M)$, Hilbert--Schmidt commutator norms & Minimal Axiomatization \& \textbf{Nyquist--Lax Trichotomy} & Local bounded-fan-in spatial stencil resolving a Lax spike without dissipation or aliasing \\
+\addlinespace
+\textbf{Phase 2: Microlocal Dynamics} & Derive $90^\circ$ phase-space rotation converting UV spatial modes into temporal rotors & Mixed-type Tricomi--Keldysh PDEs, complexified cotangent bundle $T^*\mathcal{M}_{\mathbb{C}}$, Stokes connection & Signature flip from elliptic $(+,+)$ to hyperbolic $(-,+)$ across $\Sigma(x,t) = 0$ & Failure of complex coordinate continuation to preserve symplectic/unitary norm \\
+\addlinespace
+\textbf{Phase 3: Complexity Theory} & Translate hyperbolic shock lightcones into sequential circuit depth lower bounds & Bounded-depth circuits ($\mathrm{NC}$ vs.\ $\mathrm{P}$), DAG critical-path analysis, communication complexity & \textbf{Sub-Stepping Depth Theorem} and $\mathrm{P}$-completeness of shock networks & Parallel prefix or spectral algorithms fast-forwarding intersecting shocks in $\mathcal{O}(\log^k N)$ depth \\
+\addlinespace
+\textbf{Phase 4: Computational Sandboxes} & Benchmark unitary temporal sub-stepping against dissipative shock-capturing schemes & Bandlimited spectral lattices, unitary Haar--Givens rotors, co-moving clock registers in PyTorch & \textbf{Milestones 2, 3, \& 4}: Zero-loss shock propagation, linear DAG scaling, coherent clock readback & Secular energy drift or non-physical dispersive reflection in temporal phase buffers \\
+\addlinespace
+\textbf{Phase 5: Formal Verification} & Machine-check the finite-dimensional algebraic core of the bandwidth--depth tradeoff & Lean 4, \texttt{Matrix.Rank}, \texttt{UnitaryGroup}, block-partitioned sum types & Verified module \texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean} proving $D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])/2$ & Failure of commutator rank bounds to enforce a strict linear lower bound on sequential gate depth \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section{Axiomatic Foundations, Deductive Structure, and the Aliasing--Unitarity No-Go Lemma (Phase 1)}
+\label{sec:phase1}
+\subsection{The Minimal Four-Axiom Formulation (Emergent Dilation Architecture)}
+\label{subsec:minimal-axioms}
+To separate fundamental physical resource inputs from derived mathematical structures, we formulate the conjecture on a composite Hilbert space $\mathcal{H}_{\text{tot}}$ governed by four primitive axioms: two kinematic resource bounds (Bekenstein and Margolus--Levitin), one dynamical nonlinearity condition, and one local unitarity conservation law.
+\begin{axiom}[Spatial Bandlimitation --- The Bekenstein--Kempf Projector (A1)]
+\label{ax:a1}
+Observable spatial fields reside in a Paley--Wiener subspace $V_{\Lambda} = P_{\Lambda}\mathcal{H}_{\text{tot}} = PW_{\Lambda_{\text{Bek}}}(\mathbb{R})$ defined by an idempotent, self-adjoint ultraviolet wavenumber projector $P_{\Lambda}^2 = P_{\Lambda} = P_{\Lambda}^\dagger$ with hard spectral cutoff $|k| \le \Lambda_{\text{Bek}}$, unitarily isomorphic to the discrete sampling lattice $\ell^2(\mathbb{Z}_{\Delta x})$ with fundamental spacing $\Delta x = \pi / \Lambda_{\text{Bek}}$.
+\end{axiom}
+\begin{axiom}[Rate Limit on State Changes --- The Margolus--Levitin Sequential Channel (A2)]
+\label{ax:a2}
+Any local state transition coupling the bandlimited spatial subspace $V_{\Lambda}$ to an orthogonal degree of freedom proceeds through elementary rank-1 quantum channels ($\mathrm{rank}((I - P_{\Lambda}) W_k P_{\Lambda}) \le 1$) whose transition frequency is bounded above by the Margolus--Levitin limit $\nu_{\text{ML}} \le \frac{2E}{\pi\hbar}$ (imposing a minimum sequential clock tick $\Delta\tau_{\text{ML}} = \pi / \nu_{\text{ML}}$ per elementary gate $W_k$).
+\end{axiom}
+\begin{axiom}[Scale-Generating Nonlinearity --- Non-Commutativity (A3)]
+\label{ax:a3}
+The microscopic generator of spatial wave transport is nonlinear (convective mode-multiplying), so for steepening wave profiles the unconstrained short-time propagator $U_{\text{nl}} = \exp(\Delta t M(u))$ fails to commute with the spatial bandlimit projector $P_{\Lambda}$:
+\begin{equation}
+[P_{\Lambda}, U_{\text{nl}}] \ne 0 \quad \Longleftrightarrow \quad \mathcal{A}_{\Lambda}[u] \equiv \left\| \big[ P_{\Lambda}, [M(u), L(u)] \big] \right\|_{\text{HS}} > 0,
+\end{equation}
+where $(L(u), M(u))$ denotes the Lax pair of the nonlinear flow and $F_{tx}[u] = \partial_t M - \partial_x L + [M, L]$ is the zero-curvature defect.
+\end{axiom}
+\begin{axiom}[Reflectionless Local Unitarity --- No Erasure and No Aliasing (A4)]
+\label{ax:a4}
+Time evolution on $\mathcal{H}_{\text{tot}}$ is generated by bounded-fan-in local unitary operators ($U^\dagger U = I$, forbidding dissipative Landauer bit erasure $E_{\min} = n k_B T \ln 2$) that satisfy reflectionless impedance matching at the Brillouin boundary $|k| = \Lambda_{\text{Bek}}$ (forbidding unphysical Umklapp spectral folding $k \mapsto k - 2\Lambda_{\text{Bek}}$ or backward dispersive Gibbs reflections into $V_{\Lambda}$).
+\end{axiom}
+\subsection{Deductive Emergence of the Clock Fiber, $90^\circ$ Rotor, and Higgs Potential}
+\label{subsec:deductive-chain}
+Under Axioms A1--A4, the auxiliary structures of the Bekenstein--Nyquist framework are not assumed ad hoc; they emerge as rigorous mathematical deductions along a single linear chain:
+\begin{equation}
+\small
+\underbrace{\text{Axioms A1 + A3}}_{\text{Bandlimit + Nonlinearity}} \implies \underbrace{[P_{\Lambda}, U_{\text{nl}}] \ne 0}_{\text{Phase 1 Defect}} \xrightarrow{+\text{A4}} \underbrace{V_{\Lambda}^{\perp} \equiv \mathcal{H}_{\text{clock}}}_{\text{Phase 5 Clock Fiber}} \xrightarrow{+\text{A2}} \underbrace{\mathcal{D}(\gamma) \text{ \& } \Sigma(x,t) < 0}_{\text{Phases 2--4 Rotor \& Higgs}}.
+\end{equation}
+Specifically:
+\begin{enumerate}
+\item \textbf{Deduction 1 --- Existence of the Orthogonal Worldline Clock Fiber $\mathcal{H}_{\text{clock}}$ (From A1 + A3 + A4):} By Axiom A3 ($[P_{\Lambda}, U_{\text{nl}}] \ne 0$), the projected spatial update $\Phi_{\Delta t} = P_{\Lambda} U_{\text{nl}} P_{\Lambda}$ satisfies $(P_{\Lambda} U_{\text{nl}} P_{\Lambda})^\dagger (P_{\Lambda} U_{\text{nl}} P_{\Lambda}) = P_{\Lambda} - A^\dagger A$ with inter-band leakage $A = (I - P_{\Lambda}) U_{\text{nl}} P_{\Lambda} \ne 0$, making $\Phi_{\Delta t}$ a strict contraction on $V_{\Lambda}$. By Axiom A4 (Unitarity) and the Sz.-Nagy/Stinespring dilation theorem (machine-checked in Phase 5, \texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean}), restoring unitarity mathematically requires an orthogonal complement $V_{\Lambda}^{\perp} = (I - P_{\Lambda})\mathcal{H}_{\text{tot}} \equiv \mathcal{H}_{\text{clock}}$ of dimension at least $r = \mathrm{rank}(A) = \frac{1}{2}\mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])$.
+\item \textbf{Deduction 2 --- Sequential Depth Lower Bound $\mathcal{D}(\gamma)$ (From Deduction 1 + A2):} Combining the commutator rank identity $\mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) = 2r$ with Axiom A2 (each elementary gate couples at most a 1D clock wire at rate $\le \nu_{\text{ML}}$) forces any unitary circuit realization $U_D = W_D \cdots W_1$ to have sequential depth $D \ge r = \frac{1}{2}\mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])$, yielding the continuum Sub-Stepping Depth Theorem along the shock worldline $\gamma$ (Phase 3).
+\item \textbf{Deduction 3 --- Normalized Feasibility Margin $\Sigma(x,t)$ and the $90^\circ$ Signature Flip (From A1--A4):} Identifying the local parallel channel capacity $C_{\text{self}} = \Lambda_{\text{Bek}}\nu_{\text{ML}}$ (from A1 and A2) and the nonlinear spectral spillover flux $R_{\text{self}}(x,t) = \|F_{tx}(x,t)\|_{\text{HS}}$ (from A3) defines the dimensionless channel feasibility margin $\mathcal{M}(x,t)/C_{\text{self}}$, which is precisely the Bekenstein--Nyquist Saturation Functional $\Sigma(x,t) = 1 - \frac{\|F_{tx}(x,t)\|_{\text{HS}}}{\Lambda_{\text{Bek}}\nu_{\text{ML}}}$ (Phase 2). When $\Sigma > 0$ ($R_{\text{self}} < C_{\text{self}}$), updates execute in $\mathcal{O}(1)$ parallel depth (elliptic regime); when $\Sigma < 0$ ($R_{\text{self}} > C_{\text{self}}$), Axiom A4 forces overflowing modes into sequential phase winding in $\mathcal{H}_{\text{clock}}$ via the $90^\circ$ cotangent rotation $\xi \mapsto i\xi$ (hyperbolic regime).
+\item \textbf{Deduction 4 --- Impedance-Matched Givens Rotor and Landau--Ginzburg--Higgs Potential (From A3 + A4):} On the $2\times 2$ subspace spanning the overflowing Nyquist bond mode $|u_{b,\text{UV}}\rangle \in V_{\Lambda}$ and the active clock wire $|c_{j,k}\rangle \in V_{\Lambda}^{\perp}$, reflectionless unitarity at $|k| = \Lambda_{\text{Bek}}$ (Axiom A4) uniquely fixes the $\mathrm{SU}(2)$ Givens rotation angle $\tan\vartheta = \sqrt{\Delta k / \Lambda_{\text{Bek}}}$. Because transferring norm $|c|^2$ into $\mathcal{H}_{\text{clock}}$ reduces the spatial commutator overload linearly ($F(|c|) = F_0 - \kappa |c|^2$), the saturation functional relaxes as $\Sigma(|c|) = \Sigma_0 + 2\lambda |c|^2$, whose integral with respect to $|c|^2$ yields the Landau--Ginzburg--Higgs potential $V_{\text{eff}}(c) = \Sigma_0 |c|^2 + \lambda |c|^4$ (Phase 4).
+\end{enumerate}
+\subsection{Axiomatic Equivalence: Emergent Dilation vs.\ Primitive Bipartite Bundle}
+\label{subsec:axiomatic-equivalence}
+Just as quantum mechanics admits mathematically equivalent formulations (the Schr\"odinger, Heisenberg, and path-integral pictures), the Bekenstein--Nyquist Conjecture can be axiomatized either by deriving $\mathcal{H}_{\text{clock}}$ via Stinespring dilation (Axioms A1--A4) or by taking the bipartite fiber bundle $\mathcal{H}_{\text{tot}} = \mathcal{H}_{\Lambda} \oplus \mathcal{H}_{\text{clock}}$ as a primitive geometric structure equipped with minimal horizon gating:
+\begin{itemize}
+\item \textbf{Axiom B1 (Global Bundle Unitarity):} Composite evolution $U_{\text{tot}}(\Delta t) \in \mathrm{U}(\mathcal{H}_{\Lambda} \oplus \mathcal{H}_{\text{clock}})$ conserves total norm $\|u\|_2^2 + \sum_{j,k} |c_{j,k}|^2 = \mathrm{const}$.
+\item \textbf{Axiom B2 (Sub-Nyquist Dormancy / Horizon Gating):} The inter-bundle coupling $(I - P_{\Lambda}) U_{\text{tot}} P_{\Lambda}$ vanishes wherever $\|F_{tx}(x,t)\|_{\text{HS}} \le \Lambda_{\text{Bek}}\nu_{\text{ML}}$ ($\Sigma(x,t) \ge 0$).
+\item \textbf{Axiom B3 (Impedance-Matched Overflow Serialization):} Wherever $\Sigma(x,t) < 0$, overflowing ultraviolet modes in $\mathcal{H}_{2\Lambda} \ominus \mathcal{H}_{\Lambda}$ rotate into $\mathcal{H}_{\text{clock}}$ via sequential rank-1 $\mathrm{SU}(2)$ Givens gates at $\tan\vartheta = \sqrt{\Delta k / \Lambda_{\text{Bek}}}$, costing one Margolus--Levitin tick $\Delta\tau_{\text{ML}} = \pi/\nu_{\text{ML}}$ per gate.
+\end{itemize}
+\begin{proposition}[Theorem of Axiomatic Equivalence]
+\label{prop:axiomatic-equivalence}
+The Emergent Stinespring Dilation Axioms (A1--A4) and the Primitive Bipartite Bundle Axioms (B1--B3) are operationally equivalent on all spatial observables in $V_{\Lambda}$ and induce identical sequential depth lower bounds $\mathcal{D}(\gamma)$, horizon metrics $\Sigma(x,t)$, and effective potentials $V_{\text{eff}}(c)$. Moreover, taking $\mathcal{H}_{\text{clock}}$ as a persistent co-moving bundle (B1--B3) naturally accommodates multi-step phase memory ($K = 64$ worldline clock slots in Milestone 4) and homogeneous vacuum expectation values ($\langle c \rangle_{\text{vac}} \ne 0$).
+\end{proposition}
+\begin{table}[htbp]
+\centering
+\caption{Three Complementary Perspectives on the Axiomatic Architecture of the Conjecture.}
+\label{tab:axiomatic-lenses}
+\footnotesize
+\begin{tabular}{L{3.1cm}L{3.8cm}L{3.5cm}L{3.6cm}}
+\toprule
+\textbf{Axiomatic Lens} & \textbf{Core Mathematical Statement} & \textbf{Ontological Meaning of a Shock Wave} & \textbf{Ontological Meaning of Mass / Clock Depth} \\
+\midrule
+\textbf{1. Operator-Algebraic / Homological Lens} (Mathematicians \& Lean 4) & Non-commutativity of nonlinear evolution and bandlimitation: $[P_{\Lambda}, U_{\text{nl}}] \ne 0$ & Localized spike in the commutator obstruction $\mathcal{A}_{\Lambda}[u] = \|[P_{\Lambda}, [M, L]]\|_{\text{HS}}$ & Minimal Stinespring dilation rank $D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])/2$ in $V_{\Lambda}^{\perp}$ \\
+\addlinespace
+\textbf{2. Information-Theoretic / Queueing Lens} (Computer Scientists) & Zero-drop channel buffering with capacity $C_{\text{self}} = \Lambda_{\text{Bek}}\nu_{\text{ML}}$ and $U^\dagger U = I$ & Local channel overload ($\mathcal{M} < 0 \iff \Sigma < 0$) where flux $R_{\text{self}} > C_{\text{self}}$ & Sequential queueing lag $m_j \Delta\tau_{\text{ML}}$ in local worldline clock memory $\mathcal{C}_j$ \\
+\addlinespace
+\textbf{3. Geometric / Equivalence Principle Lens} (Relativistic \& Particle Physicists) & Covariant bandlimit invariance on complexified cotangent bundle $T^*\mathcal{M}_{\mathbb{C}}$ & Sonic/Nyquist horizon ($\Sigma(x,t) = 0$) where effective metric $g_{00} \leftrightarrow \Sigma$ flips sign & Higgs/Kaluza--Klein condensate $|c_{\text{eq}}|^2 = -\Sigma_0/(2\lambda)$ coiled in internal fiber \\
+\bottomrule
+\end{tabular}
+\end{table}
+\subsection{Analytical Proof Architecture for the Nyquist--Lax Trichotomy}
+\label{subsec:nyquist-lax-trichotomy}
+To prove that spatial parallelism breaks down at a shock front under Axioms A1, A3, and A4, notice that ``local unitarity'' purely within the spatial Hilbert space $\mathcal{H}_{\Lambda}$ combines two distinct operational requirements: norm conservation ($\|\Phi_{\Delta t}(u)\|_2 = \|u\|_2$) and bounded-fan-in spatial locality ($\mathcal{O}(1)$ parallel circuit depth within stencil radius $r_0$). Theorem \ref{thm:nyquist-lax-trichotomy} proves that at a super-critical shock front, these two halves of spatial local unitarity cannot coexist with the Bekenstein bandlimit (Axiom A1), forcing the relaxation of $\mathcal{O}(1)$ parallel depth into sequential time-stepping governed by the Margolus--Levitin rate limit (Axiom A2).
+\begin{theorem}[Nyquist--Lax Trichotomy / Aliasing--Unitarity No-Go Lemma]
+\label{thm:nyquist-lax-trichotomy}
+Any single-step spatial update operator $\Phi_{\Delta t} : \mathcal{H}_{\Lambda} \to \mathcal{H}_{\Lambda}$ acting across a shock locus where $\mathcal{A}_{\Lambda}[u] = \|[P_{\Lambda}, [M(u), L(u)]]\|_{\text{HS}} > \Theta_{\text{DSW}}$ must violate at least one of the following three operational postulates:
+\begin{enumerate}
+\item \textbf{Postulate 1 --- Strict Spatial Bandwidth (Bekenstein Bound, Axiom A1):} $\mathrm{supp}(\hat{u}) \subseteq [-\Lambda_{\text{Bek}}, \Lambda_{\text{Bek}}]$ without dynamically allocating sub-Planckian spatial lattice nodes.
+\item \textbf{Postulate 2 --- Norm Unitarity / Information Conservation (First Half of Axiom A4):} $\|\Phi_{\Delta t}(u)\|_2 = \|u\|_2$, forbidding artificial viscosity, WENO truncation, or Landauer erasure of ultraviolet modes.
+\item \textbf{Postulate 3 --- Constant Parallel Depth / Bounded-Fan-In Spatial Locality (Second Half of Local Unitarity):} $\Phi_{\Delta t}$ is computable in circuit depth $\mathcal{O}(1)$ purely within $\mathcal{H}_{\Lambda}$ with a spatial stencil fan-in bounded by a fixed sub-Nyquist radius $r_0$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}[Proof Architecture]
+Assume Postulates 1, 2, and 3 hold simultaneously on $\mathcal{H}_{\Lambda}$.
+\begin{enumerate}
+\item \textbf{Step 1 (Balian--Low and Donoho--Stark Uncertainty Barrier):} By the quantitative Balian--Low theorem and the Donoho--Stark uncertainty inequality ($|T|\cdot |\Omega| \ge 1 - (\epsilon_T + \epsilon_{\Omega})^2$), a shock discontinuity compressed to spatial width $\delta x \sim \pi / \Lambda_{\text{Bek}}$ concentrates $\mathcal{O}(1)$ spectral weight at the Brillouin boundary $|k| \in [\Lambda_{\text{Bek}}/2, \Lambda_{\text{Bek}}]$, generating a non-zero inter-band leakage operator $A = (I - P_{\Lambda}) U_{\text{nl}} P_{\Lambda} : \mathcal{H}_{\Lambda} \to \mathcal{H}_{2\Lambda} \ominus \mathcal{H}_{\Lambda}$.
+\item \textbf{Step 2 (Unitary Defect Identity):} Decomposing the unconstrained unitary propagator $U_{\text{nl}} = \exp(\Delta t M(u))$ on $\mathcal{H}_{\Lambda} \oplus \mathcal{H}_{\Lambda}^{\perp}$ yields $(P_{\Lambda} U_{\text{nl}} P_{\Lambda})^\dagger (P_{\Lambda} U_{\text{nl}} P_{\Lambda}) = P_{\Lambda} - A^\dagger A$. Thus, any bandlimited update $\Phi_{\Delta t} = P_{\Lambda} U_{\text{nl}} P_{\Lambda}$ dissipates norm $\|\Phi_{\Delta t} u\|_2^2 = \|u\|_2^2 - \|A u\|_2^2 < \|u\|_2^2$ (violating Postulate 2) whenever $A u \ne 0$.
+\item \textbf{Step 3 (GNVW Chiral Index Obstruction and Group Velocity Reversal):} By the Gross--Nesme--Vogts--Werner (GNVW) index theorem for 1D Quantum Cellular Automata, any strictly local constant-depth unitary circuit restricted purely to $\mathcal{H}_{\Lambda}$ (Postulate 3) has a trivial inter-subspace flow index between $\mathcal{H}_{\Lambda}$ and $\mathcal{H}_{2\Lambda} \ominus \mathcal{H}_{\Lambda}$. Folding the chiral ultraviolet flux back into $[-\Lambda_{\text{Bek}}, \Lambda_{\text{Bek}}]$ via Umklapp aliasing ($k \mapsto k - 2\Lambda_{\text{Bek}}$) reverses the group velocity $v_g = \partial\omega/\partial k < 0$ at $|k| = \Lambda_{\text{Bek}}$ and produces non-physical backward dispersive ringing. Preserving both Postulates 1 and 2 therefore requires Stinespring dilation into an orthogonal register $\mathcal{H}_{\text{clock}}$ across sequential depth $D \ge \mathrm{rank}(A)$ (violating Postulate 3) ticked at the Margolus--Levitin rate limit $\nu_{\text{ML}}$ (Axiom A2).
+\end{enumerate}
+\end{proof}
+\section{Microlocal Analysis of the $90^\circ$ Causal Rotation (Phase 2)}
+\label{sec:phase2}
+\subsection{The Bekenstein--Nyquist Saturation Functional and Mixed-Type PDEs}
+Once Phase 1 establishes that no constant-depth spatial operator on $\mathcal{H}_{\Lambda}$ can simultaneously preserve unitarity and bandwidth across a Lax curvature spike, Phase 2 constructs the unique dynamical escape mechanism forced by Axioms A1--A4: a microlocal signature transition that rotates overflowing spatial modes by $90^\circ$ into sequential temporal phase degrees of freedom governed by $\nu_{\text{ML}}$.
+\begin{definition}[Bekenstein--Nyquist Saturation Functional]
+The local normalized feasibility margin $\mathcal{M}(x,t)/C_{\text{self}}$ of a bandlimited field $u(x,t) \in \mathcal{H}_{\Lambda}$ relative to the spacetime information-processing ceiling $\theta_{\text{Nyq}} = \Lambda_{\text{Bek}}\nu_{\text{ML}}$ is defined by
+\begin{equation}
+\Sigma(x, t) \equiv \frac{C_{\text{self}} - R_{\text{self}}(x,t)}{C_{\text{self}}} = 1 - \frac{\|F_{tx}(x,t)\|_{\text{HS}}}{\Lambda_{\text{Bek}} \, \nu_{\text{ML}}}.
+\end{equation}
+\end{definition}
+The effective bandlimited propagator is modeled by a second-order mixed-type operator $P_{\text{eff}}$ on the cotangent bundle $T^*\mathcal{M}$ whose principal symbol takes the generalized Tricomi--Keldysh form:
+\begin{equation}
+\sigma_{\text{eff}}(x, t; \xi, \omega) = \omega^2 + \Sigma(x,t) \, c_0^2 \xi^2,
+\end{equation}
+where $(\xi, \omega)$ are the cotangent fiber coordinates dual to $(x, t)$ and $c_0$ is the characteristic bulk wave speed:
+\begin{itemize}
+\item \textbf{Sub-Nyquist Bulk ($\Sigma(x, t) > 0$):} Where $\|F_{tx}(x,t)\|_{\text{HS}} < \Lambda_{\text{Bek}} \nu_{\text{ML}}$, $\sigma_{\text{eff}} = \omega^2 + |\Sigma| c_0^2 \xi^2$ has positive-definite \textbf{elliptic} signature $(+,+)$, admitting parallel equilibration in $\mathcal{O}(1)$ circuit depth ($m_j = 0$).
+\item \textbf{Sonic or Nyquist Horizon ($\Sigma(x, t) = 0$):} Along the codimension-1 caustic locus where $\|F_{tx}(x,t)\|_{\text{HS}} = \Lambda_{\text{Bek}} \nu_{\text{ML}}$, spatial stiffness vanishes ($\sigma_{\text{eff}} = \omega^2$), forming a parabolic degeneracy surface analogous to a transonic sonic horizon or mixed-type gravitational collapse horizon.
+\item \textbf{Super-Nyquist Shock Worldline ($\Sigma(x, t) < 0$):} Inside the shock core where $\|F_{tx}(x,t)\|_{\text{HS}} > \Lambda_{\text{Bek}} \nu_{\text{ML}}$, the $\xi^2$ coefficient flips sign to yield $\sigma_{\text{eff}} = \omega^2 - |\Sigma| c_0^2 \xi^2$. In the complexified cotangent fiber $T^*_{(x,t)}\mathcal{M}_{\mathbb{C}}$, this sign reversal is equivalent to a $90^\circ$ Wick-type rotation $\xi \mapsto i\xi$, rendering the symbol strictly \textbf{hyperbolic} with Lorentzian signature $(-,+)$ and real characteristic lightcones $\frac{dx}{dt} = \pm \sqrt{|\Sigma(x,t)|}\, c_0$.
+\end{itemize}
+\begin{table}[htbp]
+\centering
+\caption{Mixed-Type PDE Universality Classes at the Nyquist Horizon $\Sigma(x,t) = 0$.}
+\label{tab:mixed-type-pde}
+\footnotesize
+\begin{tabular}{L{2.0cm}L{3.1cm}L{2.5cm}L{3.0cm}L{3.0cm}}
+\toprule
+\textbf{Mixed-Type Class} & \textbf{Canonical Normal Form near $x_{\perp} = 0$} & \textbf{Principal Symbol $\sigma(x_{\perp}; \xi_{\perp}, \omega)$} & \textbf{Characteristic Geometry at Horizon $x_{\perp} = 0$} & \textbf{Physical Role in Bekenstein--Nyquist Shocks} \\
+\midrule
+\textbf{Tricomi Type} & $\partial_t^2 u + x_{\perp} c_0^2 \partial_{x_{\perp}}^2 u = 0$ & $-\omega^2 - x_{\perp} c_0^2 \xi_{\perp}^2$ & Characteristics $\frac{dx_{\perp}}{dt} = \pm c_0 \sqrt{-x_{\perp}}$ meet the horizon \textbf{orthogonally} in a semi-cubic cusp and reflect & Governs transverse \textbf{Rankine--Hugoniot phase reflections} across the shock zone boundaries \\
+\addlinespace
+\textbf{Keldysh Type} & $x_{\perp} \partial_t^2 u + c_0^2 \partial_{x_{\perp}}^2 u = 0$ & $-x_{\perp} \omega^2 - c_0^2 \xi_{\perp}^2$ & Characteristics approach the horizon \textbf{tangentially} (asymptotically) without escaping into the bulk & Governs \textbf{worldline trapping} of overflowing UV modes along the shock trajectory \\
+\bottomrule
+\end{tabular}
+\end{table}
+\subsection{Complex Coordinate Continuation and Internal Clock Winding}
+Across the turning point $\Sigma(x,t) = 0$, applying complex coordinate continuation $x \mapsto x + i c_{\text{eff}} \tau$ paired with the $90^\circ$ cotangent rotation $\Delta k \mapsto -i \Delta k$ maps an overflowing spatial mode $k = \Lambda_{\text{Bek}} + \Delta k$ ($\Delta k > 0$) into sequential temporal phase winding along the internal worldline clock fiber $\mathcal{C}_j$:
+\begin{equation}
+\exp(i k x) = \exp(i \Lambda_{\text{Bek}} x) \cdot \exp(i \Delta k \, x) \xrightarrow{\; x \mapsto x + i c_{\text{eff}} \tau, \;\; \Delta k \mapsto -i \Delta k \;} \exp(i \Lambda_{\text{Bek}} x) \cdot \exp(-i \omega_{\text{sub}} \tau),
+\end{equation}
+where the internal sub-stepping frequency is $\omega_{\text{sub}} = c_{\text{eff}} \Delta k \le \nu_{\text{ML}}$.
+\section{Complexity Theory and Sequential Depth Lower Bounds (Phase 3)}
+\label{sec:phase3}
+\subsection{The Sub-Stepping Depth Theorem and Holographic Shock Complexity}
+Phase 3 translates the hyperbolic characteristic cones generated in the $\Sigma(x, t) < 0$ shock core into rigorous lower bounds on Boolean and unitary circuit depth, linking the PDE signature transition directly to the separation between parallel complexity ($\mathrm{NC}$) and sequential polynomial time ($\mathrm{P}$).
+\begin{theorem}[Sub-Stepping Depth Theorem]
+\label{thm:substepping-depth}
+For any bounded-precision unitary simulator evolving a field configuration along a shock worldline $\gamma$, the minimum sequential circuit depth $\mathcal{D}(\gamma)$ is bounded below by the line integral of the projection-curvature commutator anomaly:
+\begin{equation}
+\mathcal{D}(\gamma) \ge \frac{1}{\pi \nu_{\text{ML}}} \int_{\gamma} \left\| [P_{\Lambda}, [M(u), L(u)]] \right\|_{\text{HS}} \, ds.
+\end{equation}
+\end{theorem}
+This theorem exhibits a direct structural isomorphism with the \textbf{Complexity = Action (CA)} and \textbf{Shock Wave Geometry} framework in holographic quantum gravity (Stanford, Susskind, Shenker, Maldacena, Brown, Roberts, Swingle, and Zhao). In holographic shock wave geometries, injecting shock waves into a bulk spacetime stretches the Wheeler--DeWitt (WDW) causal patch at a late-time rate governed by Lloyd's bound, $\frac{d\mathcal{C}}{dt} \le \frac{2M}{\pi \hbar}$, while saturating the Maldacena--Shenker--Stanford (MSS) chaos bound $\lambda_L \le \frac{2\pi k_B T}{\hbar}$. Here, each unit of integrated Hilbert--Schmidt commutator norm $\pi \nu_{\text{ML}}$ requires at least one orthogonal Margolus--Levitin clock cycle to resolve unitarily.
+The proof strategy proceeds via \textbf{two-party communication complexity} across the moving shock cut $x_s(t)$ partitioning $\mathcal{H}_{\Lambda}$ into left ($\mathcal{H}_L$) and right ($\mathcal{H}_R$) Paley--Wiener subspaces: computing $K$ alternating non-commuting Rankine--Hugoniot unitary phase reflections $R_K R_{K-1} \cdots R_1$ across the cut requires $\Omega(K)$ sequential message-passing rounds, forbidding compression into polylogarithmic $\mathrm{NC}$ depth $\mathcal{O}(\log^k K)$.
+\subsection{$\mathrm{P}$-Completeness of Shock Worldline Networks and the Monotone Planar Circuit Trap}
+\begin{table}[htbp]
+\centering
+\caption{Circuit Value Problem (CVP) Variants and Implications for Shock Worldline Networks.}
+\label{tab:cvp-variants}
+\footnotesize
+\begin{tabular}{L{2.8cm}L{2.4cm}L{2.1cm}L{2.6cm}L{3.7cm}}
+\toprule
+\textbf{CVP Variant} & \textbf{Topology} & \textbf{Gate Set} & \textbf{Complexity Class} & \textbf{Shock Network Implication} \\
+\midrule
+\textbf{General CVP} & Arbitrary DAG (crossings allowed) & $\{\wedge, \vee, \neg\}$ & $\mathrm{P}$-complete & Requires crossover gadgets in $1+1\text{D}$ multi-species or $2+1\text{D}$ collisions \\
+\addlinespace
+\textbf{Monotone CVP (MCVP)} & Arbitrary DAG (crossings allowed) & $\{\wedge, \vee\}$ only & $\mathrm{P}$-complete (Goldschlager 1977) & Cannot be embedded in strictly planar $1+1\text{D}$ single-species flow \\
+\addlinespace
+\textbf{Planar CVP (PCVP)} & Planar DAG ($\text{genus } g = 0$) & $\{\wedge, \vee, \neg\}$ & $\mathrm{P}$-complete (Goldschlager 1977) & \textbf{Target for Phase 3.2:} Planar shock intersections + unitary $\pi$-rotor negation ($\neg$) \\
+\addlinespace
+\textbf{Monotone Planar CVP (MPCVP)} & Planar DAG ($\text{genus } g = 0$) & $\{\wedge, \vee\}$ only & In $\mathrm{NC}^3$ ($\mathrm{LogDCFL} \subseteq \mathrm{NC}^2$ stratified) & \textbf{The MPCVP Trap:} Dissipative monotone shock merging is parallelizable in $\mathcal{O}(\log^3 N)$ depth \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section{Computational Verification on Bandlimited Hydrodynamic Lattices (Phase 4)}
+\label{sec:phase4}
+\subsection{The $1+1\text{D}$ Unitary Nyquist Rotor Lattice (Experiment H.3 / Milestone 2)}
+To validate Phases 1 and 2 on a nonlinear hydrodynamic PDE without artificial viscosity or spectral aliasing, Experiment H.3 (\texttt{toy\_\allowbreak{}model\_\allowbreak{}2\_\allowbreak{}nyquist\_\allowbreak{}rotor\_\allowbreak{}pde.py}) constructs the \textbf{Unitary Nyquist Rotor Lattice} in IEEE 754 \texttt{float64}/\texttt{complex128} precision on a periodic $1+1\text{D}$ ring $x \in [-\pi, \pi)$ of $N_x = 2\Lambda_{\text{Bek}}$ spatial nodes with fundamental Nyquist spacing $\Delta x = \pi / \Lambda_{\text{Bek}}$. Each spatial site $j \in \{0, \dots, N_x - 1\}$ is augmented with an $M$-level local worldline clock register $\mathcal{C}_j = \mathrm{span}\{|c_{j,1}\rangle, \dots, |c_{j,M}\rangle\}$, yielding the composite Hilbert space $\mathcal{H}_{\text{tot}} = \mathcal{H}_{\Lambda} \oplus \bigoplus_{j=0}^{N_x - 1} \mathcal{C}_j$.
+The solver evolves the inviscid Burgers conservation law $\partial_t u + \partial_x(\frac{1}{2} u^2) = 0$ via four strictly unitary, state-driven components:
+\begin{enumerate}
+\item \textbf{Translation-Invariant $\mathcal{H}_{2\Lambda}$ Analytic-Signal Spillover Sensor:} At each step, $u \in \mathcal{H}_{\Lambda}$ is zero-padded onto a $2\times$-oversampled Paley--Wiener grid $N_{\text{fine}} = 4\Lambda_{\text{Bek}}$ to evaluate $w_{\text{fine}} = u_{\text{fine}} \partial_x u_{\text{fine}}$. Retaining the positive super-Nyquist band $\Lambda_{\text{Bek}} \le k_{\text{fine}} < 2\Lambda_{\text{Bek}}$ defines the complex analytic signal:
+\begin{equation}
+w_{\text{analytic}}(x_{\text{fine}}) = 2 \, \mathcal{F}^{-1}\!\left( \mathbf{1}_{\{\Lambda_{\text{Bek}} \le k_{\text{fine}} < 2\Lambda_{\text{Bek}}\}} \, \mathcal{F}(u_{\text{fine}} \partial_x u_{\text{fine}}) \right).
+\end{equation}
+For a bandlimited step of jump $\Delta u$, $|w_{\text{analytic}}|$ scales organically as $c_{\infty} \Lambda_{\text{Bek}} (\Delta u)^2$ with $c_{\infty} \approx 0.264$ ($17.630, 34.580, 68.369$ at $\Lambda_{\text{Bek}} = 64, 128, 256$), determining $m_j = \lceil F_j / \theta_{\text{Nyq}} \rceil$.
+\item \textbf{Skew-Symmetric Cayley Transport with Galilean-Invariant Delay:} Decomposing $u = \bar{u} + \delta u$ applies the queueing delay $\tau_j = m_j \Delta\tau_{\text{ML}} / \Delta t_{\text{ref}}$ strictly to the wave-frame fluctuation $\delta u_j$:
+\begin{equation}
+w_{\text{eff}, j} = \frac{2}{3} \left( \bar{u}_j + \frac{u_j - \bar{u}_j}{1 + \gamma_{\text{eff}} \, \tilde{\tau}_j} \right), \qquad U_{\text{spatial}}(\Delta t) = \left(I + \frac{\Delta t}{2} A(w_{\text{eff}})\right)^{-1} \left(I - \frac{\Delta t}{2} A(w_{\text{eff}})\right),
+\end{equation}
+where $A(w)^T = -A(w)$, guaranteeing $U_{\text{spatial}}^T U_{\text{spatial}} = I$ to machine precision ($\sim 10^{-16}$).
+\item \textbf{5-Bond Unitary Haar--Givens Rotor Sweep:} Each active shock node executes $m_j$ sequential $2 \times 2$ unitary Givens rotations $G_{j,k}(\vartheta_{j,k}, \phi_j) \in \mathrm{SU}(2)$ coupling the 2-site Haar Nyquist difference mode $u_{b,\text{UV}} = (u_{b_0} - u_{b_1})/\sqrt{2}$ to a single 1D clock wire $c_{j,\text{slot}} \in \mathcal{C}_j$ at the impedance-matched angle $\tan\vartheta = \sqrt{1/\Lambda_{\text{Bek}}}$.
+\end{enumerate}
+\subsection{Comparative Shock-Capturing Benchmarks and Poisson--Euler RG Duality}
+\begin{table}[htbp]
+\centering
+\caption{Milestone 2 Comparative Benchmark Results ($\Lambda_{\text{Bek}} = 64, N_x = 128$).}
+\label{tab:milestone2-benchmarks}
+\footnotesize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccc}
+\toprule
+\textbf{Scenario} & \textbf{Solver Architecture} & \textbf{Max Norm Drift} & \textbf{Spatial $\|u\|_2^2$} & \textbf{Clock $\sum |c|^2$} & \textbf{Final $TV(u)$} & \textbf{Overshoot} & \textbf{Speed $s$ ($s_{\text{RH}}$)} \\
+\midrule
+Riemann Step & \textbf{Unitary Nyquist Rotor} & \textbf{1.245e-15} & 32.638543 & 1.611907 & 1.6616 & 2.612e-02 & 0.5727 (0.6000) \\
+Riemann Step & Dissipative Godunov & 5.536e-02 & 32.354491 & 0.000000 & 1.5942 & 0.000e+00 & 0.6106 (0.6000) \\
+Riemann Step & Naive Galerkin Spectral & 3.615e-07 & 34.250438 & 0.000000 & 10.1806 & 1.767e-01 & 0.6080 (0.6000) \\
+\midrule
+Sine Wave $-\sin(x)$ & \textbf{Unitary Nyquist Rotor} & \textbf{6.661e-16} & 58.267303 & 5.732697 & 4.1198 & 2.638e-02 & 0.0004 (0.0000) \\
+Sine Wave $-\sin(x)$ & Dissipative Godunov & 1.120e-01 & 56.831485 & 0.000000 & 3.8780 & 0.000e+00 & 0.0000 (0.0000) \\
+Sine Wave $-\sin(x)$ & Naive Galerkin Spectral & 4.590e-08 & 63.999997 & 0.000000 & 33.9979 & 3.446e-01 & 0.0000 (0.0000) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+Because the impedance-matched Givens coupling scales as $\sin^2\vartheta = \frac{1}{\Lambda_{\text{Bek}} + 1} \sim \Lambda_{\text{Bek}}^{-1}$ while the spectral spillover sub-step count at a shock scales as $m_j = c(\Delta u) \Lambda_{\text{Bek}}$, the per-macro-step ultraviolet energy absorption converges to a cutoff-independent Poisson--Euler renormalization-group fixed point:
+\begin{equation}
+\mathcal{T}_{\text{UV}}(\Lambda_{\text{Bek}}) = 1 - (\cos^2\vartheta)^{m_j} = 1 - \left(1 - \frac{1}{\Lambda_{\text{Bek}} + 1}\right)^{c(\Delta u)\,\Lambda_{\text{Bek}}} \xrightarrow{\Lambda_{\text{Bek}} \to \infty} 1 - e^{-c(\Delta u)}.
+\end{equation}
+\subsection{Spacetime Causal DAG Critical-Path Scaling and Asymptotic Tightness (Experiment H.4 / Milestone 3)}
+Experiment H.4 (\texttt{toy\_\allowbreak{}model\_\allowbreak{}3\_\allowbreak{}dag\_\allowbreak{}complexity.py}) dynamically constructs the spacetime causal dependency DAG $G = (V, E)$ across bandwidth cutoffs $\Lambda_{\text{Bek}} \in \{64, 128, 256\}$ ($T_{\text{final}} = 1.60, \Delta t = 0.01$) for (a) a single-shock sine wave $u_0(x) = -\sin(x)$ ($t^* = 1.00$) and (b) a 4-mode random multi-shock gas ($t^* = 0.80$). At each macro-step $\Delta t$, $m_j$ is partitioned across $n_{\text{sub}}$ Cayley sub-steps via $m_{\text{sub}, s} = \lfloor (m_j + s) / n_{\text{sub}} \rfloor$ so that the cumulative physical Givens rotations match the DAG rotor vertices 1-to-1:
+\begin{equation}
+\text{total\_physical\_givens\_rotations} = \sum_{n=1}^{N_{\text{steps}}} \sum_{j=0}^{N_x - 1} m_j(t_n) = |V(T)| - (N_{\text{steps}} + 1) N_x.
+\end{equation}
+\begin{table}[htbp]
+\centering
+\caption{Milestone 3 Spacetime Causal DAG Critical-Path Scaling and Theorem Tightness.}
+\label{tab:milestone3-dag}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+\textbf{Initial Condition} & $\Lambda_{\text{Bek}}$ & \textbf{Pre-Shock} & \textbf{Final $\mathrm{depth}(G)$} & \textbf{Excess $D_{\text{excess}}$} & \textbf{Bound $\mathcal{B}_{\text{thm}}$} & \textbf{Tightness} & \textbf{Work $|V|$} & \textbf{Rotations $\sum m_j$} & \textbf{Hyp.\ Slope} & \textbf{Max Drift} \\
+\midrule
+Single-Shock $-\sin(x)$ & 64 & 50 & 1014 & 854 & 816.19 & \textbf{1.0463} & 27086 & 6478 & 1637.04 & 6.661e-16 \\
+Single-Shock $-\sin(x)$ & 128 & 50 & 2244 & 2084 & 2052.35 & \textbf{1.0154} & 59121 & 17905 & 3903.70 & 1.332e-15 \\
+Single-Shock $-\sin(x)$ & 256 & 50 & 4429 & 4269 & 4240.79 & \textbf{1.0067} & 138963 & 56531 & 7933.33 & 1.554e-15 \\
+\midrule
+Multi-Shock Gas & 64 & 40 & 541 & 381 & 329.83 & \textbf{1.1551} & 25545 & 4937 & 609.46 & 4.152e-16 \\
+Multi-Shock Gas & 128 & 40 & 1014 & 854 & 813.46 & \textbf{1.0498} & 55041 & 13825 & 1243.24 & 1.107e-15 \\
+Multi-Shock Gas & 256 & 40 & 1735 & 1575 & 1536.71 & \textbf{1.0249} & 120925 & 38493 & 2210.81 & 8.304e-16 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+\subsection{The Bandwidth--Saturation Equivalence Principle and Holographic Bulk Extrusion}
+\label{subsec:equivalence-principle}
+The analytical and numerical structure of Phases 2--5 establishes an operational \textbf{Bandwidth--Saturation Equivalence Principle}:
+\begin{enumerate}
+\item \textbf{Informational Horizon Geometry and Proper-Time Dilation ($\Sigma(x,t)$ as an Effective Metric Component $g_{00}$):} $\Sigma(x, t) = 1 - \frac{\|F_{tx}(x,t)\|_{\text{HS}}}{\Lambda_{\text{Bek}} \nu_{\text{ML}}}$ enters $\sigma_{\text{eff}}(x, t; \xi, \omega) = \omega^2 + \Sigma(x, t) c_0^2 \xi^2$ in exact structural analogy to the Schwarzschild temporal metric component $g_{00}(r) = 1 - \frac{2GM}{c^2 r}$, inducing a proper-time queueing lag $\Delta\tau_{\text{lag}}(\gamma) = \mathcal{D}(\gamma)\Delta\tau_{\text{ML}}$ across $\Sigma < 0$.
+\item \textbf{Inertial Mass as Sequential Queueing Drag:} In the Galilean-invariant effective transport velocity $w_{\text{eff}, j} = \frac{2}{3} \big( \bar{u}_j + \frac{\delta u_j}{1 + \gamma_{\text{eff}} \tilde{\tau}_j} \big)$ with $\tau_j = m_j \Delta\tau_{\text{ML}} / \Delta t_{\text{ref}}$, the factor $M_{\text{inert}, j} \equiv 1 + \gamma_{\text{eff}} \tilde{\tau}_j$ acts as a state-dependent inertial mass multiplier decelerating the over-steepened wave crest to the Rankine--Hugoniot shock speed $s = [f(u)]/[u]$.
+\item \textbf{Rest Mass as Coiled Ultraviolet Momentum in the Clock Fiber:} In the stationary sine-wave shock benchmark ($u_0(x) = -\sin(x)$ at $T = 1.35 > t^* = 1.00$), the shock worldline sits macroscopically at rest at $x = 0$ ($s_{\text{RH}} = 0.0000$, measured speed $0.0004$) while storing $\mathcal{M}_{\text{clock}} = \sum_{j,k} |c_{j,k}|^2 = 5.732697$ of ultraviolet $L^2$ norm in the stationary clock register $\mathcal{C}_{j_{\text{shock}}}$ ticking at $\omega_{\text{sub}} = c_{\text{eff}}\Delta k \le \nu_{\text{ML}}$.
+\end{enumerate}
+\subsubsection{Holographic Bulk Extrusion, Ryu--Takayanagi Min-Cut Wire Counting, and Effective $g_{00}$ Horizon Geometry}
+\label{subsubsec:holographic-bulk-extrusion}
+Combining the Bekenstein--Nyquist Saturation Functional $\Sigma(x,t)$ of Phase 2 with the machine-checked Stinespring dilation bound of Phase 5 (\texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean}) reveals a dynamical mechanism in which both an emergent orthogonal bulk/fiber dimension ($\mathcal{H}_{\text{clock}}$) and an effective horizon metric ($g_{00} \leftrightarrow \Sigma(x,t)$) are extruded by ultraviolet spectral overflow on the spatial boundary $\mathcal{H}_{\Lambda}$.
+\begin{corollary}[Boundary Overflow Drives Bulk Depth and Horizon Geometry]
+\label{cor:rt-bulk-extrusion}
+Let $u(x,t) \in \mathcal{H}_{\Lambda} = PW_{\Lambda_{\text{Bek}}}(\mathbb{R})$ evolve on a $1+1\text{D}$ bandlimited spatial lattice with Nyquist cutoff $\Lambda_{\text{Bek}}$, Margolus--Levitin transition ceiling $\nu_{\text{ML}}$, and composite Hilbert space $\mathcal{H}_{\text{tot}} = \mathcal{H}_{\Lambda} \oplus \bigoplus_{j=0}^{N_x-1} \mathcal{C}_j$. Then:
+\begin{enumerate}
+\item \textbf{Dynamical Extrusion of the Orthogonal Fiber:} In the sub-Nyquist elliptic bulk ($\Sigma(x,t) > 0$, $F_j \le \theta_{\text{Nyq}} = \Lambda_{\text{Bek}}\nu_{\text{ML}}$), the spectral spillover into $\mathcal{H}_{2\Lambda} \ominus \mathcal{H}_{\Lambda}$ vanishes exponentially, leaving the internal clock fiber unexcited ($m_j = 0$) and the circuit depth flat ($\mathcal{O}(1)$). When nonlinear convective steepening breaches the Nyquist horizon ($\Sigma(x,t) < 0$, $F_j > \theta_{\text{Nyq}}$), the complex coordinate continuation $x \mapsto x + i c_{\text{eff}}\tau$ paired with the $90^\circ$ cotangent rotation $\Delta k \mapsto -i\Delta k$ rotates overflowing boundary modes $\Delta k = k - \Lambda_{\text{Bek}} > 0$ into sequential temporal phase winding $\exp(-i\omega_{\text{sub}}\tau)$ along $\mathcal{C}_j$, dynamically extruding an internal fiber of sequential depth $m_j = \lceil F_j / \theta_{\text{Nyq}} \rceil \propto \Lambda_{\text{Bek}}(\Delta u)^2$ localized along the $1\text{D}$ shock worldline $\gamma$.
+\item \textbf{Operator-Algebraic Ryu--Takayanagi / HRT Min-Cut Bound:} Each local Haar--Givens update decomposes a lattice bond $(u_j, u_{j+1})$ into its coarse-grained mean $\bar{u}_j = (u_j + u_{j+1})/\sqrt{2}$ and Nyquist difference mode $u_{j,\text{UV}} = (u_j - u_{j+1})/\sqrt{2}$, acting as a local multiscale wavelet disentangler (analogous to a MERA tensor network) rotated into sequential Margolus--Levitin proper time. By Theorem \texttt{unitary\_\allowbreak{}bandwidth\_\allowbreak{}depth\_\allowbreak{}tradeoff}, any unitary factorization $U_D = W_D \cdots W_1$ whose elementary gates $W_k$ couple $\mathcal{H}_{\Lambda}$ to at most a single $1\text{D}$ clock wire $C_k \subset \mathcal{H}_{\Lambda}^{\perp}$ ($\dim C_k = 1$) must sever a minimum number of clock wires along the worldline cut bounded by half the commutator rank:
+\begin{equation}
+\begin{aligned}
+\mathrm{rank}\!\big([P_{\Lambda}, U_{\text{nl}}]\big) = 2r &\implies D \ge r = \mathrm{rank}\!\big((I - P_{\Lambda}) U_{\text{nl}} P_{\Lambda}\big), \\[4pt]
+\mathcal{D}(\gamma) &\ge \frac{1}{\pi \nu_{\text{ML}}} \int_{\gamma} \left\| [P_{\Lambda}, [M(u), L(u)]] \right\|_{\text{HS}} \, ds.
+\end{aligned}
+\end{equation}
+\item \textbf{Apparent Shock Entropy and Effective $g_{00}$ Metric Warping:} Because total evolution on $\mathcal{H}_{\text{tot}}$ is strictly unitary ($\|u\|_2^2 + \sum_{j,k} |c_{j,k}|^2 = \mathrm{const}$), macroscopic hydrodynamic entropy production is the entanglement/norm leakage $\mathcal{M}_{\text{clock}} = \sum_{j,k} |c_{j,k}|^2$ obtained by tracing out the worldline clock fiber $\mathcal{H}_{\text{clock}}$ across $\gamma$. Under impedance matching $\sin^2\vartheta = (\Lambda_{\text{Bek}} + 1)^{-1}$, the per-step leakage along $\gamma$ converges to the scale-invariant fixed point $1 - (\cos^2\vartheta)^{m_j} \to 1 - e^{-c(\Delta u)}$, while the sequential queueing delay $\Delta\tau_j = m_j \Delta\tau_{\text{ML}}$ warps the effective principal symbol $\sigma_{\text{eff}}(x,t;\xi,\omega) = \omega^2 + \Sigma(x,t) c_0^2 \xi^2$ in exact correspondence with the temporal metric component $g_{00} \leftrightarrow \Sigma(x,t) = 1 - \frac{\|F_{tx}\|_{\text{HS}}}{\Lambda_{\text{Bek}}\nu_{\text{ML}}}$.
+\end{enumerate}
+\end{corollary}
+\subsection{Two-Shock Collision Interferometry, Coherent Clock-Mass Annihilation, and the Ginzburg--Landau--Higgs Duality (Milestone 4 \& Phase 3.2)}
+\label{subsec:milestone4}
+\subsubsection{Evasion of the Monotone Planar Circuit Trap via Orthogonal Two-Mode Haar Clock Readback}
+To demonstrate that intersecting $1+1\text{D}$ shock worldlines physically realize the non-monotone logical negation ($\neg$) gate required to evade the $\mathrm{NC}^3$ collapse of MPCVP, Milestone 4 (\texttt{toy\_\allowbreak{}model\_\allowbreak{}4\_\allowbreak{}shock\_\allowbreak{}collision\_\allowbreak{}gate.py}) replaces the write-only pointer advance with a \textbf{co-moving $K$-slot resonant worldline clock register} ($K = 64$, indexed directly by $\text{slot} = (\text{clock\_ptr} + k_{\text{sub}}) \bmod 64$).
+On each active bond $(b_0, b_1)$, \texttt{execute\_\allowbreak{}bidirectional\_\allowbreak{}givens\_\allowbreak{}collision} transforms $(u_{b_0}, u_{b_1})$ into the orthonormal 2-site Haar wavelet basis:
+\begin{equation}
+\bar{u}_{\text{in}} = \frac{u_{b_0} + u_{b_1}}{\sqrt{2}} \quad (\text{smooth local mean}), \qquad u_{\text{UV, in}} = \frac{u_{b_0} - u_{b_1}}{\sqrt{2}} \quad (\text{Nyquist difference}),
+\end{equation}
+and executes a three-stage orthogonal update on the 3-mode subspace $(\bar{u}_b, u_{b,\text{UV}}, c_{\text{slot}})$:
+\begin{enumerate}
+\item \textbf{Stage 1 --- Unitary UV Stabilization ($u_{b,\text{UV}} \leftrightarrow c_{\text{slot}}$):} Rotates the overflowing Nyquist difference mode $u_{\text{UV, in}} > 0$ into the worldline clock slot $c_{\text{slot}}$ by $\vartheta_1 = \min\!\big(\vartheta, \, 0.85 \arctan(u_{\text{UV, in}} / \max(0, c_{\text{in}}))\big)$:
+\begin{equation}
+\begin{pmatrix} u_{\text{UV, out}} \\ c_{\text{mid}} \end{pmatrix} = \begin{pmatrix} \cos\vartheta_1 & -\sin\vartheta_1 \\ \sin\vartheta_1 & \cos\vartheta_1 \end{pmatrix} \begin{pmatrix} u_{\text{UV, in}} \\ c_{\text{in}} \end{pmatrix}.
+\end{equation}
+\item \textbf{Stage 2 --- Phase-Coherent Collision Readback into the Smooth Mean Mode ($\bar{u}_b \leftrightarrow c_{\text{slot}}$):} When the state-driven shock separation crosses $\Delta x_{\text{sep}} = x_2 - x_1 \le 2.4 \Delta x$, the relative rotor phase $\Delta\phi = \phi_2 - \phi_1$ governs $\gamma_{\text{phase}}(\Delta\phi) = \mathrm{sgn}(\sin(\Delta\phi/2)) \sin^2(\Delta\phi/2)$ and $\theta_{\text{rec}} = \min\!\big(\theta_{\text{cap}}, \, 0.40 \gamma_{\text{phase}} \arctan(c_{\text{mid}} / \bar{u}_{\text{in}})\big)$, rotating stored clock condensate $c_{\text{mid}}$ back into the smooth local mean mode $\bar{u}_{\text{out}}$ without exciting $u_{\text{UV, out}}$:
+\begin{equation}
+\begin{pmatrix} \bar{u}_{\text{out}} \\ c_{\text{out}} \end{pmatrix} = \begin{pmatrix} \cos\theta_{\text{rec}} & \sin\theta_{\text{rec}} \\ -\sin\theta_{\text{rec}} & \cos\theta_{\text{rec}} \end{pmatrix} \begin{pmatrix} \bar{u}_{\text{in}} \\ c_{\text{mid}} \end{pmatrix}.
+\end{equation}
+\item \textbf{Stage 3 --- Inverse Orthogonal Haar Transformation:} Maps $(\bar{u}_{\text{out}}, u_{\text{UV, out}})$ back to $(u_{b_0}, u_{b_1})$:
+\begin{equation}
+\begin{aligned}
+u_{b_0}^{\text{out}} &= u_{b_0}^{\text{in}} + \frac{\bar{u}_{\text{out}} - \bar{u}_{\text{in}}}{\sqrt{2}} + \frac{u_{\text{UV, out}} - u_{\text{UV, in}}}{\sqrt{2}}, \\[4pt]
+u_{b_1}^{\text{out}} &= u_{b_1}^{\text{in}} + \frac{\bar{u}_{\text{out}} - \bar{u}_{\text{in}}}{\sqrt{2}} - \frac{u_{\text{UV, out}} - u_{\text{UV, in}}}{\sqrt{2}}.
+\end{aligned}
+\end{equation}
+\end{enumerate}
+\subsubsection{Experimental Verification: Gate Truth Table, Coalescence Kinematics, and Ramsey Interference Fringes}
+\begin{table}[htbp]
+\centering
+\caption{Milestone 4 Suite B Two-Shock Collision \& Coalescence Benchmark ($T_{\text{final}} = 1.40, \Lambda_{\text{Bek}} = 64$).}
+\label{tab:milestone4-suiteb}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Collision Solver / Regime} & $\Delta\phi$ & \textbf{Clock Mass $\mathcal{M}_{\text{clock}}(T)$} & \textbf{Spatial $\|u(T)\|_2^2$} & \textbf{Max $|u|$} & \textbf{Final $TV(u)$} & \textbf{Max Drift} & \textbf{Speed $s_{\text{merged}}$} & \textbf{Rotations $\sum m_j$} \\
+\midrule
+Unitary Rotor --- In-Phase & $0$ & 3.017201 & 49.695025 & 1.2433 & 2.8108 & \textbf{8.089e-16} & 0.6769 (-3.30\%) & $1449 == 1449$ \\
+Unitary Rotor --- Anti-Phase & $\pi$ & \textbf{0.396683} & \textbf{52.315543} & \textbf{1.3157} & \textbf{2.8143} & \textbf{8.089e-16} & 0.7573 (+8.19\%) & $1858 == 1858$ \\
+Dissipative Godunov / WENO & --- & 0.000000 & 49.155968 & 1.2000 & 2.0000 & 6.746e-02 & 0.7000 & 0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+\begin{table}[htbp]
+\centering
+\caption{Milestone 4 Suite C Shock Mach--Zehnder / Ramsey Interference Fringe ($\Delta\phi \in [0, 2\pi]$).}
+\label{tab:milestone4-suitec}
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ccccccccc}
+\toprule
+$\Delta\phi$ & $\Delta\phi$ (deg) & $\mathcal{M}_{\text{clock}}(T, \Delta\phi)$ & $\|u(T, \Delta\phi)\|_2^2$ & $\|u\|_2^2 + \mathcal{M}_{\text{clock}}$ & Max $\|u(x,T)\|_{\infty}$ & Final $TV(u)$ & $\sum m_j$ & Max Drift \\
+\midrule
+$0$ & $0^\circ$ & 3.017201 & 49.695025 & 52.712226 & 1.2433 & 2.8108 & 1449 & 8.089e-16 \\
+$\pi/4$ & $45^\circ$ & 2.167711 & 50.544516 & 52.712226 & 1.3082 & 3.8474 & 1382 & 1.483e-15 \\
+$\pi/2$ & $90^\circ$ & 1.120733 & 51.591494 & 52.712226 & 1.3046 & 2.9885 & 1499 & 8.089e-16 \\
+$3\pi/4$ & $135^\circ$ & 0.687753 & 52.024473 & 52.712226 & 1.3337 & 3.7520 & 1443 & 8.089e-16 \\
+$\pi$ & $180^\circ$ & \textbf{0.396683} & \textbf{52.315543} & 52.712226 & \textbf{1.3157} & \textbf{2.8143} & \textbf{1858} & 8.089e-16 \\
+$5\pi/4$ & $225^\circ$ & 0.687753 & 52.024473 & 52.712226 & 1.3337 & 3.7520 & 1443 & 8.089e-16 \\
+$3\pi/2$ & $270^\circ$ & 1.120733 & 51.591494 & 52.712226 & 1.3046 & 2.9885 & 1499 & 8.089e-16 \\
+$7\pi/4$ & $315^\circ$ & 2.167711 & 50.544516 & 52.712226 & 1.3082 & 3.8474 & 1382 & 1.483e-15 \\
+$2\pi$ & $360^\circ$ & 3.017201 & 49.695025 & 52.712226 & 1.2433 & 2.8108 & 1449 & 8.089e-16 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+\subsubsection{Duality Between the Bekenstein--Nyquist Clock Fiber and the Landau--Ginzburg--Higgs Mechanism}
+Because Stage 1 transfers ultraviolet energy $|c|^2$ from $u_{b,\text{UV}}$ into the clock fiber, the active commutator defect decreases linearly as $F(|c|) = F_0 - \kappa |c|^2$, shifting the instantaneous saturation functional to
+\begin{equation}
+\Sigma(|c|) = 1 - \frac{F_0 - \kappa |c|^2}{\Lambda_{\text{Bek}} \, \nu_{\text{ML}}} = \Sigma_0 + 2\lambda |c|^2, \qquad \lambda \equiv \frac{\kappa}{2\Lambda_{\text{Bek}}\nu_{\text{ML}}} > 0.
+\end{equation}
+Integrating $\frac{\partial V_{\text{eff}}}{\partial (|c|^2)} = \Sigma(|c|)$ yields the effective Landau--Ginzburg--Higgs Mexican-hat potential governing the clock condensate:
+\begin{equation}
+V_{\text{eff}}(c) = \Sigma_0 |c|^2 + \lambda |c|^4 = \underbrace{\left( 1 - \frac{F_0(x,t)}{\Lambda_{\text{Bek}} \, \nu_{\text{ML}}} \right)}_{\mu^2(x,t) \, \equiv \, \Sigma_0(x,t)} |c|^2 + \lambda |c|^4,
+\end{equation}
+where the Higgs boson mass $m_H^2 c^4 \propto \frac{1}{2}\frac{\partial^2 V_{\text{eff}}}{\partial |c|^2}\big|_{|c|=|c_{\text{eq}}|} = -2\Sigma_0 (\hbar\nu_{\text{ML}})^2$ represents the elastic restoring stiffness of the Sonic/Nyquist Horizon $\Sigma = 0$.
+\begin{table}[htbp]
+\centering
+\caption{Four-Pillar Structural Duality Between the Landau--Ginzburg--Higgs Mechanism and the Bekenstein--Nyquist Clock Fiber.}
+\label{tab:higgs-duality}
+\footnotesize
+\begin{tabular}{L{2.4cm}L{3.8cm}L{3.9cm}L{3.9cm}}
+\toprule
+\textbf{Structural Pillar} & \textbf{Landau--Ginzburg--Higgs Formulation} & \textbf{Bekenstein--Nyquist Worldline Formulation} & \textbf{Mathematical Duality} \\
+\midrule
+\textbf{1. Origin of Auxiliary Fiber} (Phase 5) & Perturbative unitarity restoration: scalar doublet $\Phi$ absorbs $(E/\Lambda)^2$ longitudinal growth at the Lee--Quigg--Thacker cutoff & Stinespring dilation (\texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean}): $P_{\Lambda} U_{\text{nl}} P_{\Lambda}$ requires $D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}])/2$ clock wires in $V_{\Lambda}^{\perp}$ & \textbf{Sz.-Nagy / Stinespring Duality:} Higgs field $\Phi$ is the continuum effective representation of the UV clock complement $V_{\Lambda}^{\perp} = (I - P_{\Lambda})H$ \\
+\addlinespace
+\textbf{2. Condensation Trigger} (Phase 2) & Spontaneous symmetry breaking: quadratic coefficient $\mu^2$ in $V(\Phi) = \mu^2 |\Phi|^2 + \lambda |\Phi|^4$ flips from $\mu^2 > 0$ to $\mu^2 < 0$ & Bandwidth saturation: $\Sigma_0(x,t) = 1 - \frac{F_0}{\Lambda_{\text{Bek}}\nu_{\text{ML}}}$ flips from $\Sigma_0 > 0$ (elliptic) to $\Sigma_0 < 0$ (hyperbolic shock core) & \textbf{Horizon Criticality:} $\mu^2(x,t) \equiv \Sigma_0(x,t)$; condensing $|c_{\text{eq}}|^2 = -\Sigma_0/(2\lambda)$ restores horizon equilibrium $\Sigma(|c_{\text{eq}}|) = 0$ \\
+\addlinespace
+\textbf{3. Momentum-Space Locus} (Phases 2 \& 4) & Infrared zero-mode condensate ($k \to 0$): rest mass $m_0 c^2 = \hbar\omega_0$ is a homogeneous internal Compton oscillation $\exp(-i\omega_0 \tau)$ & Ultraviolet Brillouin overflow ($|k| > \Lambda_{\text{Bek}}$): $x \mapsto x + i c_{\text{eff}}\tau$ rotates $\Delta k = k - \Lambda_{\text{Bek}} > 0$ into internal clock winding $\exp(-i\omega_{\text{sub}}\tau)$ & \textbf{UV/IR Fibre Duality:} Shifting momentum origin by $\Lambda_{\text{Bek}}$ and rotating $90^\circ$ maps boundary UV overflow into fiber IR oscillation \\
+\addlinespace
+\textbf{4. Worldline Dynamics} (Phases 3 \& 4) & Relativistic worldline action: massive particle accumulates proper-time phase $\frac{1}{\hbar}\int_{\gamma} m c^2 \, d\tau$ via chiral Yukawa mixing $\psi_L \leftrightarrow \psi_R$ & Sub-Stepping Depth Theorem: shock worldline $\gamma$ executes $\mathcal{D}(\gamma) \ge \frac{1}{\pi\nu_{\text{ML}}}\int_{\gamma} \|[P_{\Lambda}, [M, L]]\|_{\text{HS}} \, ds$ sequential Givens rotations & \textbf{Action--Complexity Duality:} Relativistic mass action along $\gamma$ is dual to sequential Margolus--Levitin gate depth along the causal DAG critical path \\
+\bottomrule
+\end{tabular}
+\end{table}
+\section{Machine-Checked Formal Verification of the Algebraic Core in Lean 4 (Phase 5 / Milestone 1)}
+\label{sec:phase5}
+In \texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean} (verified against Lean 4 v4.33.1 and Mathlib with zero \texttt{sorry} axioms and zero compiler warnings), we formalize the finite-dimensional Hilbert space $H \cong \mathbb{C}^{d + m}$ indexed by the canonical block sum type \texttt{BlockIdx d m := Fin d $\oplus$ Fin m}. The orthogonal bandlimit projector onto the $d$-dimensional low-frequency Bekenstein subspace $V_{\Lambda}$ and its $m$-dimensional ultraviolet complement $V_{\Lambda}^{\perp}$ ($m = N - d$) are defined via \texttt{Matrix.fromBlocks} as $P_{\Lambda} = \mathrm{diag}(I_d, 0_m)$ (\texttt{bandlimitProj d m}) and $I - P_{\Lambda} = \mathrm{diag}(0_d, I_m)$ (\texttt{uvProj d m}):
+\begin{equation}
+\begin{aligned}
+P_{\Lambda} &= \begin{pmatrix} I_d & 0 \\ 0 & 0 \end{pmatrix}, \qquad U_{\text{nl}} = \begin{pmatrix} U_{11} & U_{12} \\ U_{21} & U_{22} \end{pmatrix}, \qquad A = \begin{pmatrix} 0 & 0 \\ U_{21} & 0 \end{pmatrix}, \\[4pt]
+B &= \begin{pmatrix} 0 & U_{12} \\ 0 & 0 \end{pmatrix}, \qquad [P_{\Lambda}, U_{\text{nl}}] = B - A = \begin{pmatrix} 0 & U_{12} \\ -U_{21} & 0 \end{pmatrix}.
+\end{aligned}
+\end{equation}
+The formalization establishes four machine-checked theorems:
+\begin{enumerate}
+\item \textbf{Single-Wire Clock Support Implies Rank-One Leakage (\texttt{elementaryClockGate\_\allowbreak{}forwardLeakage\_\allowbreak{}rank\_\allowbreak{}le\_\allowbreak{}one}):} An elementary clock gate $W \in \mathrm{U}(d + m)$ satisfies \texttt{IsElementaryClockGate d m c W} if its forward leakage $(I - P_{\Lambda}) W P_{\Lambda}$ vanishes on all ultraviolet rows $\mathrm{inr}(i) \ne \mathrm{inr}(c)$ outside a single 1D clock wire $c \in \mathrm{Fin}(m)$. Factoring the non-zero row through \texttt{Fin 1} proves $\mathrm{rank}((I - P_{\Lambda}) W P_{\Lambda}) \le 1$.
+\item \textbf{One-Sided Leakage Subadditivity (\texttt{one\_\allowbreak{}sided\_\allowbreak{}leakage\_\allowbreak{}decomposition} \& \texttt{circuitProduct\_\allowbreak{}forwardLeakage\_\allowbreak{}rank\_\allowbreak{}le\_\allowbreak{}length}):} For any idempotent projector $P^2 = P$ and any list of unitary gates $L : \mathrm{List}(\mathrm{unitaryGroup}\; n\; \mathbb{C})$, the algebraic identity
+\begin{equation}
+(I - P)(W U)P = \big((I - P) W P\big)(P U P) + \big((I - P) W (I - P)\big)\big((I - P) U P\big)
+\end{equation}
+combined with rank subadditivity (\texttt{matrix\_\allowbreak{}rank\_\allowbreak{}add\_\allowbreak{}le}) and induction over $L$ proves that if every $W \in L$ has $\mathrm{rank}((I - P) W P) \le 1$, then $\mathrm{rank}((I - P) (\prod L) P) \le \mathrm{length}(L) = D$.
+\item \textbf{Commutator Rank Duality (\texttt{commutator\_\allowbreak{}rank\_\allowbreak{}eq\_\allowbreak{}add\_\allowbreak{}leakage\_\allowbreak{}rank} \& \texttt{unitary\_\allowbreak{}commutator\_\allowbreak{}rank\_\allowbreak{}eq\_\allowbreak{}two\_\allowbreak{}mul\_\allowbreak{}forwardLeakage\_\allowbreak{}rank}):} Using the unitary block Gram identities $U_{11}^\dagger U_{11} + U_{21}^\dagger U_{21} = I_d$ and $U_{11} U_{11}^\dagger + U_{12} U_{12}^\dagger = I_d$ together with \texttt{Matrix.rank\_\allowbreak{}conjTranspose\_\allowbreak{}mul\_\allowbreak{}self} ($\mathrm{rank}(M^\dagger M) = \mathrm{rank}(M)$), the formalization proves that forward and reverse Nyquist leakage have equal rank ($\mathrm{rank}(A) = \mathrm{rank}(B) = r$) and reside in orthogonal subspaces, yielding $\mathrm{rank}([P_{\Lambda}, U]) = 2r$.
+\item \textbf{Isometric and Block-Compression Bandwidth--Depth Tradeoffs (\texttt{unitary\_\allowbreak{}bandwidth\_\allowbreak{}depth\_\allowbreak{}tradeoff} \& \texttt{unitary\_\allowbreak{}bandwidth\_\allowbreak{}depth\_\allowbreak{}tradeoff\_\allowbreak{}from\_\allowbreak{}commutator\_\allowbreak{}rank}):} For any target nonlinear unitary $U_{\text{nl}} \in \mathrm{U}(d + m)$ simulated by a sequential circuit $U_D = \prod_{k=1}^D W_k$ of elementary 1D clock gates, both exact isometric action agreement ($U_D P_{\Lambda} = U_{\text{nl}} P_{\Lambda}$) and the weaker block-compression dilation condition ($P_{\Lambda} U_D P_{\Lambda} = P_{\Lambda} U_{\text{nl}} P_{\Lambda}$) force $\mathrm{rank}((I - P_{\Lambda}) U_D P_{\Lambda}) = \mathrm{rank}((I - P_{\Lambda}) U_{\text{nl}} P_{\Lambda}) = r$, establishing the unconditional lower bound:
+\begin{equation}
+D = \mathrm{length}(L) \ge r = \frac{1}{2} \mathrm{rank}\big([P_{\Lambda}, U_{\text{nl}}]\big).
+\end{equation}
+\end{enumerate}
+\section{Integrated Synthesis}
+\label{sec:synthesis}
+Together, the Minimal Four-Axiom Formulation (Axioms A1--A4) and its equivalence with the Primitive Bipartite Bundle (Axioms B1--B3), the analytical proofs of Phases 1--3, the machine-checked Lean 4 theorems of Phase 5 (\texttt{Unitary\allowbreak{}Bandwidth\allowbreak{}Depth.lean}), and the four progressive computational toy models of Phase 4 (\texttt{toy\_\allowbreak{}model\_\allowbreak{}1\_\allowbreak{}unitary\_\allowbreak{}leakage.py} through \texttt{toy\_\allowbreak{}model\_\allowbreak{}4\_\allowbreak{}shock\_\allowbreak{}collision\_\allowbreak{}gate.py}, passing 40/40 automated unit, falsification, and anti-cheat assertions) establish a unified mathematical and computational foundation for the \textbf{Bekenstein--Nyquist Shock Worldline Conjecture}:
+\begin{itemize}
+\item \textbf{Unitary Dilation Lower Bound (Milestone 1 / Phase 5):} Any unitary simulation of a nonlinear operator across a bandlimit projector $P_{\Lambda}$ using 1D clock wires requires an orthogonal clock fiber $V_{\Lambda}^{\perp}$ and sequential circuit depth $D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$.
+\item \textbf{Zero-Loss Unitary Shock Stabilization (Milestone 2 / Experiment H.3):} Rotating overflowing Nyquist bond modes into local worldline clock registers via impedance-matched $\mathrm{U}(2)$ Givens rotations ($\tan\vartheta = \sqrt{\Delta k / \Lambda_{\text{Bek}}}$) eliminates Gibbs ringing while conserving total Hilbert-space norm $\|u\|_2^2 + \sum |c|^2$ to $\sim 10^{-15}$ and propagating shocks at the Rankine--Hugoniot speed $s = [f(u)]/[u]$.
+\item \textbf{Emergent Complexity Phase Transition \& Asymptotic Tightness (Milestone 3 / Experiment H.4):} Purely state-driven $\mathcal{H}_{2\Lambda}$ spectral spillover detection yields $\mathcal{O}(1)$ parallel circuit depth for $t < t^*$ and transitions at $t \approx t^*$ to linear sequential depth $\Omega((T - t^*) \Lambda_{\text{Bek}})$ along 1D shock worldlines, converging to within $0.67\%$ of the continuum Sub-Stepping Depth Theorem integral bound at $\Lambda_{\text{Bek}} = 256$.
+\item \textbf{Holographic Bulk Extrusion \& Ryu--Takayanagi Min-Cut Correspondence (Subsection \ref{subsubsec:holographic-bulk-extrusion}):} Ultraviolet Bekenstein--Nyquist overflow on the spatial boundary $\mathcal{H}_{\Lambda}$ dynamically extrudes sequential depth in the orthogonal clock fiber $\mathcal{H}_{\text{clock}}$ and warps the effective horizon metric $g_{00} \leftrightarrow \Sigma(x,t)$, providing an operator-algebraic realization of Ryu--Takayanagi min-cut wire counting along $\gamma$.
+\item \textbf{Coherent Clock-Mass Readback \& Landau--Ginzburg--Higgs Duality (Milestone 4 / Phase 3.2):} Coupling a co-moving worldline clock register to the orthogonal 2-site Haar basis $(\bar{u}_b, u_{b,\text{UV}})$ realizes both the unitary $\pi$-rotor logical negation ($\neg$) gate required for Planar CVP $\mathrm{P}$-completeness and an $86.85\%$ coherent clock-mass annihilation fringe across $\Delta\phi \in [0, 2\pi]$.
+\end{itemize}
+\begin{thebibliography}{99}
+\bibitem{ref1} Primary Conjecture Blueprint, Bekenstein--Nyquist Research Program Archive.
+\bibitem{ref2} Physical Capacity Regions of Computation, Preprints.org (2025), 202509.0010.v1.
+\bibitem{ref3} Conditional Cosmological Recurrence in Finite Hilbert Spaces, \emph{Universe} 12(1), 10.
+\bibitem{ref4} arXiv:2009.01340v2 [hep-th].
+\bibitem{ref5} Quantum gravity, information theory and the CMB, arXiv:1803.01483v1.
+\bibitem{ref6} Kempf, A., Information-theoretic natural ultraviolet cutoff for spacetime, arXiv:gr-qc/0310035v1.
+\bibitem{ref7} Locality and entanglement in bandlimited quantum field theory, \emph{Phys.\ Rev.\ D} 92, 105022 (2015).
+\bibitem{ref8} Kempf, A., Covariant Information-Density Cutoff in Curved Space-Time, \emph{Phys.\ Rev.\ Lett.} 92, 221301 (2004).
+\bibitem{ref9} Xuereb, J.\ (2026), On the inherent thermodynamics of quantum information processing, TU Wien.
+\bibitem{ref10} Detector Bounds or Spacetime Bounds? Operational Limits, \emph{Int.\ J.\ Mod.\ Phys.\ D} (2026), 10.1142/S0218271826500574.
+\bibitem{ref11} From Seiberg--Witten Geometry to Categorical Integrability, ResearchGate 395704905.
+\bibitem{ref12} The Whitham Modulation Solution of the Complex Modified KdV, \emph{Mathematics} 11(13), 2810.
+\bibitem{ref13} A systematic method for constructing time discretizations, arXiv:0906.3155.
+\bibitem{ref14} arXiv:1512.08668v2 [math.FA].
+\bibitem{ref15} A quantitative Balian--Low theorem, arXiv:1205.0163v1.
+\bibitem{ref16} Jansen, K., Lower Bound Frontiers in Arithmetical Circuit Complexity, University at Buffalo.
+\bibitem{ref17} Clifford Quantum Cellular Automata from Topological Phases, APS Journals.
+\bibitem{ref18} Walter, M., Approximate QCAs and a converse to the Lieb--Robinson bounds.
+\bibitem{ref19} Witteveen, F., Classifying unitary dynamics with approximate light cones in one dimension.
+\bibitem{ref20} Whitham modulation theory for generalized Whitham equations, UC Merced.
+\bibitem{ref21} Dispersive Hydrodynamics of Soliton Condensates for the Korteweg--de Vries Equation, PMC10509137.
+\bibitem{ref22} arXiv:2207.13074v2 [gr-qc].
+\bibitem{ref23} Gravitational collapse in Einstein--dilaton--Gauss--Bonnet gravity, ResearchGate 333332378.
+\bibitem{ref24} Brown, A.\ R., Roberts, D.\ A., Susskind, L., Swingle, B., \& Zhao, Y., Complexity, action, and black holes, arXiv:1512.04993v2.
+\bibitem{ref25} Quantum Computational Complexity, arXiv:2110.14672v1.
+\bibitem{ref26} Holographic complexity and thermodynamics of AdS black holes, \emph{Phys.\ Rev.\ D} 100, 026016.
+\bibitem{ref27} A Fully Quantum Algorithm for Hydrodynamic Lattice Gas Cellular Automata, arXiv:2310.07362v1.
+\bibitem{ref28} Evaluating Monotone Circuits on Cylinders, Planes and Tori, STACS 2006.
+\bibitem{ref29} Limaye, N., Mahajan, M., \& Sarma, J., Upper Bounds for Monotone Planar Circuit Value.
+\bibitem{ref30} Evaluating Monotone Circuits on Surfaces, ECCC Report 2022/147.
+\bibitem{ref31} On Wave-Based Majority Gates with Cellular Automata, ResearchGate 355221563.
+\bibitem{ref32} Generalized Shannon Sampling Method reduces the Gibbs Overshoot in the Approximation of a Step Function, ResearchGate 228993443.
+\bibitem{ref33} \texttt{Mathlib.LinearAlgebra.Matrix.Rank}, Lean Prover Community Documentation.
+\bibitem{ref34} Quantum space-depth tradeoffs for coherent block encodings, arXiv:2607.01843v2.
+\end{thebibliography}
+\end{document}

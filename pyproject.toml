@@ -1,0 +1,9 @@
+[project]
+name = "bekenstein-nyquist-toy-models"
+version = "0.1.0"
+description = "Computational Toy Models and Lean 4 Formalization for the Bekenstein-Nyquist Shock Worldline Conjecture"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
