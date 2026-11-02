@@ -11,9 +11,21 @@ This module imports `QuantumInfo.Channels.CPTP` and `QuantumInfo.Entropy.VonNeum
 (`UnitaryBandwidthDepth.lean` and `NyquistRotorGates.lean`):
 
 1. **Bipartite Unitary Rotor Evolution as an Upstream `CPTPMap` (`bipartiteUnitaryChannel`)**:
-   Maps any unitary operator `U : 𝐔[d_spatial × d_clock]` (and specifically our `givensRotor` and
-   `milestone4TripartiteRouter` gates) into an upstream `CPTPMap` via `CPTPMap.ofUnitary`,
-   certifying `IsCompletelyPositive` and `IsTracePreserving`.
+   Maps any fixed-angle (linear) unitary operator `U : 𝐔[d_spatial × d_clock]` (and specifically our
+   fixed-angle `givensRotor` and `milestone4TripartiteRouter` gates on their single-excitation spaces)
+   into an upstream `CPTPMap` via `CPTPMap.ofUnitary`, certifying `IsCompletelyPositive` and
+   `IsTracePreserving`.
+   - **Direct Sum (`⊕`) vs. Tensor Product (`⊗`) Embedding:** In `UnitaryBandwidthDepth.lean` and
+     Section 1 below (`givensRotorCPTP` on `BlockIdx 1 1 = Fin 1 ⊕ Fin 1` and
+     `milestone4TripartiteCPTP` on `TripartiteIdx`), the classical hydrodynamic wave and single-excitation
+     quantum sector are formulated on a **direct sum** `d_spatial ⊕ d_clock`, where norm transfers
+     between orthogonal subspaces via block off-diagonal leakage `A = (1 - P) U P`. In Sections 2 and 3
+     below (`reducedSpatialFluidChannel` and `spatial_shock_entropy_eq_clock_entropy`), we pass to the
+     **bipartite quantum tensor product** `d_spatial × d_clock` (related to the direct sum by the
+     single-excitation sector embedding `|i⟩_S ↦ |i⟩_S ⊗ |0⟩_C, |c⟩_C ↦ |0⟩_S ⊗ |c⟩_C`) where tracing out
+     the clock subsystem via `CPTPMap.traceRight` yields a genuine mixed spatial state with von Neumann
+     entanglement entropy `Sᵥₙ`. Note also that `CPTPMap.ofUnitary` applies to fixed-angle (linear)
+     unitary gates, whereas the macroscopic Burgers lattice uses a state-dependent mean-field angle rule.
 2. **Reduced Spatial Fluid Channel via Partial Trace (`reducedSpatialFluidChannel`)**:
    Constructs the open-system spatial fluid evolution obtained by preparing an ancilla clock state
    `ρ_clock : MState d_clock`, applying the joint unitary `U : 𝐔[d_spatial × d_clock]`, and tracing

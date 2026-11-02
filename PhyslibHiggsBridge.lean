@@ -2,20 +2,25 @@ import Physlib.Particles.StandardModel.HiggsBoson.Potential
 import NyquistHiggsDuality
 
 /-!
-# Phase B Bridge 1 — Direct Upstream `Physlib` Higgs Potential Integration (`PhyslibHiggsBridge.lean`)
+# Phase B Bridge 1 — Direct Upstream `Physlib` Quartic Potential Integration (`PhyslibHiggsBridge.lean`)
 
 This module imports `Physlib.Particles.StandardModel.HiggsBoson.Potential` directly from
-`leanprover-community/physlib` and bridges it with `NyquistHiggsDuality.lean`, proving that:
-1. Under the parameter map `toPhyslibPotential σ₀ lam = ⟨-σ₀, lam⟩` (`μ² = -Σ₀`, `𝓵 = λ`),
+`leanprover-community/physlib` and bridges it with `NyquistHiggsDuality.lean`.
+It certifies the **algebraic isomorphism** between the localized Ginzburg–Landau shock-core
+defect condensate potential `V_eff(|c|²) = σ₀ |c|² + λ |c|⁴` (where `σ₀ < 0` inside over-steepened
+shock cores and `σ₀ > 0` in the smooth sub-Nyquist bulk) and `Physlib`'s quartic potential
+`StandardModel.HiggsField.Potential.toFun`:
+
+1. Under the parameter map `toPhyslibPotential σ₀ lam = ⟨-σ₀, lam⟩` (`μ² = -σ₀`, `𝓵 = λ`),
    upstream `StandardModel.HiggsField.Potential.toFun φ x` is identically equal to the
-   Bekenstein–Nyquist clock-condensate free-energy density
+   Bekenstein–Nyquist defect-condensate free-energy density
    `nyquistEffectivePotential σ₀ lam (‖φ‖_H^2 x)` at every spacetime point `x : SpaceTime`.
 2. Applying upstream `StandardModel.HiggsField.Potential.isMinOn_iff_field_of_μSq_nonpos_𝓵_pos`
    and `StandardModel.HiggsField.Potential.isMinOn_iff_field_of_μSq_nonneg_𝓵_pos` directly:
-   - In the **sub-Nyquist regime** (`0 ≤ σ₀`), the global minimum on `SpaceTime` occurs if and
+   - In the **sub-Nyquist bulk regime** (`0 ≤ σ₀`), the potential minimum occurs if and
      only if the clock section vanishes (`φ x = 0`).
-   - In the **super-Nyquist shock regime** (`σ₀ ≤ 0`), the global minimum on `SpaceTime` occurs
-     if and only if the pointwise squared norm equals the spontaneous clock-condensate VEV
+   - In the **overloaded super-Nyquist shock-core regime** (`σ₀ ≤ 0`), the potential minimum occurs
+     if and only if the pointwise squared norm equals the equilibrium defect-condensate norm
      `‖φ‖_H^2 x = equilibriumClockNormSq σ₀ lam = -σ₀ / (2 * lam)`, restoring the sonic horizon
      `dV_dcNormSq σ₀ lam (‖φ‖_H^2 x) = 0`.
 -/

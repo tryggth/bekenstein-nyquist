@@ -115,6 +115,8 @@ def test_lean4_formalization_complete_no_sorrys() -> None:
 
     required_identifiers = [
         "IsElementaryClockGate",
+        "mori_zwanzig_markov_defect_eq_reverse_mul_forward",
+        "mori_zwanzig_markov_defect_rank_le",
         "rank_forwardLeakage_le_one_of_isElementaryClockGate",
         "forwardLeakage_rank_eq_reverseLeakage_rank",
         "commutator_rank_eq_two_mul_forwardLeakage_rank",
@@ -146,10 +148,16 @@ def test_lean4_formalization_complete_no_sorrys() -> None:
             [
                 "givensRotor_mem_unitaryGroup",
                 "givensRotor_isElementaryClockGate",
+                "embeddedGivensRotor",
+                "embeddedGivensRotor_isElementaryClockGate",
                 "givensRotor_in_phase_mul",
                 "givensRotor_in_phase_double",
+                "givensRotor_list_prod_in_phase",
+                "single_bond_angle_substepping_bound",
                 "givensRotor_anti_phase_mul_eq_one",
                 "givensRotor_ramsey_fringe_entry",
+                "rabi_overrotation_reflection",
+                "rank_one_channel_ker_finrank",
                 "pauli_saturation_reflection",
                 "pauli_exclusion_blockade_ker_finrank",
                 "stage1UVStabilizer_mem_unitaryGroup",

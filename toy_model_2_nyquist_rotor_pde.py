@@ -42,6 +42,8 @@ class RotorLatticeConfig:
     flux_coupling: float = 4.15  # Coupling constant for local Lax commutator defect F_j
     velocity_delay_gamma: float = 1.0e-6  # Galilean-invariant wave-frame sub-stepping delay coupling gamma
     max_clock_levels_per_step: int = 64  # Max clock sub-steps per macro-step
+    readback_tvd_ceiling: Optional[float] = None  # Constitutive TVD/MP upper plateau bound for Stage 2 readback
+    readback_tvd_floor: Optional[float] = None  # Constitutive TVD/MP lower plateau bound for Stage 2 readback
 
     @property
     def n_x(self) -> int:
@@ -219,27 +221,31 @@ def compute_effective_transport_velocity(
 ) -> torch.Tensor:
     """
     Compute the Galilean-invariant sub-stepping delayed transport velocity w_eff:
-      1. Decompose u into a local low-pass mean u_bar (via resolution-consistent passes of the
-         3-point binomial stencil [0.25, 0.50, 0.25] so physical smoothing width sigma_x is
-         invariant across Lambda_Bek) and the local high-frequency wave-frame fluctuation
+      1. Decompose u into a local low-pass mean u_bar (via continuous resolution scaling of the
+         3-point binomial diffusion stencil [0.25, 0.50, 0.25] with the refinement ratio
+         r = (pi / 64) / dx = Lambda_Bek / 64 so the physical smoothing width sigma_x remains
+         consistent as dx -> 0) and the local high-frequency wave-frame fluctuation
          delta_u = u - u_bar.
-      2. Apply the smoothed sub-stepping delay tau_tilde_j strictly to the wave-frame fluctuation:
-           w_{eff, j} = (2 / 3) * (u_bar_j + (u_j - u_bar_j) / (1 + gamma * tau_tilde_j)).
-    This is strictly Galilean-invariant, preserves exact skew-symmetry A(w_eff)^T = -A(w_eff),
-    eliminates the (1/2) u d_x w_eff dipole spike on moving shocks, and preserves the exact
+      2. Apply the constitutive subgrid phase-lag closure 1 / (1 + gamma_eff * tau_tilde_j)
+         strictly to the wave-frame fluctuation:
+           w_{eff, j} = (2 / 3) * (u_bar_j + (u_j - u_bar_j) / (1 + gamma_eff * tau_tilde_j)),
+         where scaled_passes = round(lowpass_passes * r^2) maintains constant physical
+         Gaussian smoothing width sigma_x = sqrt(N_pass / 2) * dx across grid refinements
+         r = (pi / 64) / dx, with constant gamma_eff = config.velocity_delay_gamma.
+
+    Note: The wave-frame relaxation factor 1 / (1 + gamma_eff * tau_tilde_j) is a constitutive
+    subgrid phase-lag closure that pairs with the skew-symmetric Cayley advection matrix
+    A(w_eff)^T = -A(w_eff) to preserve Galilean invariance, exact unitarity, and the
     Rankine-Hugoniot speed s = [f(u)] / [u] = u_bar_shock.
     """
     u_real = u.real if u.is_complex() else u
     u_bar = u_real.clone()
-    if config.lambda_bek <= 64:
-        scaled_passes = lowpass_passes
-        gamma_eff = config.velocity_delay_gamma
-    elif config.lambda_bek <= 128:
-        scaled_passes = 6 * lowpass_passes
-        gamma_eff = 2.80 * config.velocity_delay_gamma
-    else:
-        scaled_passes = 22 * lowpass_passes
-        gamma_eff = 2.30 * config.velocity_delay_gamma
+    refinement_ratio = (float(torch.pi) / 64.0) / config.dx
+    scaled_passes = max(
+        lowpass_passes,
+        int(round(lowpass_passes * (refinement_ratio ** 2))),
+    )
+    gamma_eff = config.velocity_delay_gamma
     for _ in range(scaled_passes):
         u_bar = (
             0.25 * torch.roll(u_bar, shifts=1, dims=0)

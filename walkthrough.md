@@ -24,9 +24,9 @@ All four progressive computational toy models and the finite-dimensional Lean 4 
 
 - **Implementation:** [toy_model_1_unitary_leakage.py](toy_model_1_unitary_leakage.py)
 - **Lean 4 Core & Physics Extensions (6 Modules, `0 sorry`):**
-  - [UnitaryBandwidthDepth.lean](UnitaryBandwidthDepth.lean) — Phase 5 core bandwidth–depth tradeoff ($D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$).
-  - [NyquistRotorGates.lean](NyquistRotorGates.lean) — Phase A Test A1: $\mathrm{SU}(2)$ Givens rotors, constructive in-phase angle addition, anti-phase $\pi$-rotor $\neg$ gate, Ramsey fringe formula, Pauli exclusion blockade, and Milestone 4 tripartite Haar router unitarity.
-  - [NyquistHiggsDuality.lean](NyquistHiggsDuality.lean) — Phase A Test A2: Bekenstein–Nyquist saturation functional $\Sigma_0$, Mexican-hat potential completion of the square, spontaneous clock-condensate symmetry breaking ($|c_{\text{eq}}|^2 = -\Sigma_0/(2\lambda){}$), and sonic-horizon restoration ($\Sigma_{\text{eff}} = 0$).
+  - [UnitaryBandwidthDepth.lean](UnitaryBandwidthDepth.lean) — Phase 5 core multi-wire bandwidth–depth tradeoff ($D \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) / 2$).
+  - [NyquistRotorGates.lean](NyquistRotorGates.lean) — Phase A Test A1: $\mathrm{SU}(2)$ Givens rotors, non-vacuous arbitrary-dimension clock embedding (`embeddedGivensRotor_isElementaryClockGate`), constructive in-phase angle addition, single-bond sequential angle sub-stepping bound (`single_bond_angle_substepping_bound`), anti-phase $\pi$-rotor $\neg$ gate, Ramsey fringe formula, two-level Rabi saturation / rank-1 channel bottleneck (`rabi_overrotation_reflection`, `rank_one_channel_ker_finrank`), and Milestone 4 tripartite Haar router unitarity.
+  - [NyquistHiggsDuality.lean](NyquistHiggsDuality.lean) — Phase A Test A2: Bekenstein–Nyquist saturation functional $\Sigma_0$, Ginzburg–Landau–Higgs quartic potential completion of the square, localized shock-core defect-condensate formation ($|c_{\text{eq}}|^2 = -\Sigma_0/(2\lambda){}$), and sonic-horizon restoration ($\Sigma_{\text{eff}} = 0$).
   - [NyquistGaugeTransport.lean](NyquistGaugeTransport.lean) — Phase A Test A3: unconditional unitarity of the Crank–Nicolson / Cayley transform (`cayleyTransform_mem_unitaryGroup`), skew-Hermiticity of split-form Burgers and gauge-covariant clock advection, and local $\mathrm{U}(1)$ Wilson holonomy invariance.
   - [PhyslibHiggsBridge.lean](PhyslibHiggsBridge.lean) — Phase B direct upstream bridge to `Physlib.Particles.StandardModel.HiggsBoson.Potential` (`leanprover-community/physlib`) over smooth sections on 4D `SpaceTime`.
   - [QuantumInfoClockBridge.lean](QuantumInfoClockBridge.lean) — Phase B direct upstream bridge to `QuantumInfo.Channels.CPTP` and `QuantumInfo.Entropy.VonNeumann` (`leanprover-community/physlib`), certifying `CPTPMap` purification and $S_{\text{vN}}(\rho_{\Lambda}) = S_{\text{vN}}(\rho_C)$ (`Sᵥₙ_of_partial_eq`).
@@ -36,8 +36,9 @@ All four progressive computational toy models and the finite-dimensional Lean 4 
 > **Phase 5, Phase A & Phase B Lean 4 Formalizations Complete (`6 modules`, `0 sorry`, `0 warnings`, `45/45` pytest checks):**
 > All six Lean 4 modules compile cleanly under Lean 4 (`v4.33.1` + Mathlib + `leanprover-community/physlib`), formally proving:
 > - [`IsElementaryClockGate`](UnitaryBandwidthDepth.lean#L59-L64) & [`rank_forwardLeakage_le_one_of_isElementaryClockGate`](UnitaryBandwidthDepth.lean#L98-L119): 1D clock wire support implies $\mathrm{rank}((I - P_{\Lambda}) W_k P_{\Lambda}) \le 1$ via rank factorization through `Fin 1`.
-> - [`forwardLeakage_rank_eq_reverseLeakage_rank`](UnitaryBandwidthDepth.lean#L247-L254) & [`commutator_rank_eq_two_mul_forwardLeakage_rank`](UnitaryBandwidthDepth.lean#L276-L284): Unitary Gram identities $U_{11}^\dagger U_{11} + U_{21}^\dagger U_{21} = I_d$ and $U_{11} U_{11}^\dagger + U_{12} U_{12}^\dagger = I_d$ imply $\mathrm{rank}(A) = \mathrm{rank}(B) = r$ and $\mathrm{rank}([P_{\Lambda}, U]) = 2r$.
-> - [`unitary_bandwidth_depth_tradeoff_compression`](UnitaryBandwidthDepth.lean#L305-L315) & [`unitary_bandwidth_depth_tradeoff_clock_wires`](UnitaryBandwidthDepth.lean#L325-L337): Both isometric and block-compression dilations satisfy $2 \cdot \mathrm{length}(\text{gates}) \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) = 2r$.
+> - [`mori_zwanzig_markov_defect_eq_reverse_mul_forward`](UnitaryBandwidthDepth.lean#L155-L169) & [`mori_zwanzig_markov_defect_rank_le`](UnitaryBandwidthDepth.lean#L174-L179): The 2-step non-Markovian prediction defect satisfies $P(WU)P - (PWP)(PUP) = (PW(I - P))((I - P)UP) = B_W A_U$, whose rank is bounded above by both the forward and reverse Stinespring leakage ranks.
+> - [`forwardLeakage_rank_eq_reverseLeakage_rank`](UnitaryBandwidthDepth.lean#L276-L283) & [`commutator_rank_eq_two_mul_forwardLeakage_rank`](UnitaryBandwidthDepth.lean#L305-L313): Unitary Gram identities $U_{11}^\dagger U_{11} + U_{21}^\dagger U_{21} = I_d$ and $U_{11} U_{11}^\dagger + U_{12} U_{12}^\dagger = I_d$ imply $\mathrm{rank}(A) = \mathrm{rank}(B) = r$ and $\mathrm{rank}([P_{\Lambda}, U]) = 2r$.
+> - [`unitary_bandwidth_depth_tradeoff_compression`](UnitaryBandwidthDepth.lean#L334-L344) & [`unitary_bandwidth_depth_tradeoff_clock_wires`](UnitaryBandwidthDepth.lean#L354-L366): Both isometric and block-compression dilations satisfy $2 \cdot \mathrm{length}(\text{gates}) \ge \mathrm{rank}([P_{\Lambda}, U_{\text{nl}}]) = 2r$.
 > - [`givensRotor_anti_phase_mul_eq_one`](NyquistRotorGates.lean#L218-L229), [`stage2MeanReadback_preserves_uv_mode`](NyquistRotorGates.lean#L318-L320), & [`milestone4TripartiteRouter_mem_unitaryGroup`](NyquistRotorGates.lean#L351-L355): Anti-phase $\pi$-rotor negation gate and UV-spike-free tripartite Haar collision router.
 > - [`superNyquist_condensate_minimum`](NyquistHiggsDuality.lean#L163-L176), [`superNyquist_physlib_isMinOn_iff_condensate`](PhyslibHiggsBridge.lean#L62-L68), & [`spatial_shock_entropy_eq_clock_entropy`](QuantumInfoClockBridge.lean#L136-L139): Spontaneous clock-condensate formation in `Physlib` and exact equality between apparent spatial shock entropy and worldline clock entanglement entropy in `QuantumInfo`.
 
@@ -73,15 +74,15 @@ All four progressive computational toy models and the finite-dimensional Lean 4 
 | Initial Condition | $\Lambda_{\text{Bek}}$ | Pre-Shock Depth ($t = 0.5 t^*$) | Final Critical Path $\mathrm{depth}(G)$ | Rotor Excess Depth | Theorem Lower Bound | Total Work $\vert V \vert$ | Physical Rotations ($\sum m_j$) | Final $\mathrm{depth}(G)/\vert V \vert$ | Elliptic Slope / Step | Hyperbolic Slope / Time | Max Norm Drift |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Single-Shock $-\sin(x)$** ($t^* = 1.00$) | `64` | `50` | `1014` | `854` | `816.19` | `27086` | `6478` | `0.03744` | `1.0000` | `1637.04` | `6.661e-16` |
-| **Single-Shock $-\sin(x)$** ($t^* = 1.00$) | `128` | `50` | `2244` | `2084` | `2052.35` | `59121` | `17905` | `0.03796` | `1.0000` | `3903.70` | `1.332e-15` |
-| **Single-Shock $-\sin(x)$** ($t^* = 1.00$) | `256` | `50` | `4429` | `4269` | `4240.79` | `138963` | `56531` | `0.03187` | `1.0000` | `7933.33` | `1.554e-15` |
+| **Single-Shock $-\sin(x)$** ($t^* = 1.00$) | `128` | `50` | `2591` | `2431` | `2403.53` | `62147` | `20931` | `0.04169` | `1.0000` | `4538.89` | `1.332e-15` |
+| **Single-Shock $-\sin(x)$** ($t^* = 1.00$) | `256` | `50` | `5605` | `5445` | `5417.13` | `146927` | `64495` | `0.03815` | `1.0000` | `10088.89` | `1.998e-15` |
 | **Multi-Shock Gas** ($t^* = 0.80$) | `64` | `40` | `541` | `381` | `329.83` | `25545` | `4937` | `0.02118` | `1.0000` | `609.46` | `4.152e-16` |
-| **Multi-Shock Gas** ($t^* = 0.80$) | `128` | `40` | `1014` | `854` | `813.46` | `55041` | `13825` | `0.01842` | `1.0000` | `1243.24` | `1.107e-15` |
-| **Multi-Shock Gas** ($t^* = 0.80$) | `256` | `40` | `1735` | `1575` | `1536.71` | `120925` | `38493` | `0.01435` | `1.0000` | `2210.81` | `8.304e-16` |
+| **Multi-Shock Gas** ($t^* = 0.80$) | `128` | `40` | `1193` | `1033` | `995.73` | `56740` | `15524` | `0.02103` | `1.0000` | `1483.78` | `9.688e-16` |
+| **Multi-Shock Gas** ($t^* = 0.80$) | `256` | `40` | `2293` | `2133` | `2118.86` | `129990` | `47558` | `0.01764` | `1.0000` | `2963.51` | `9.688e-16` |
 
 - **Post-Catastrophe Sequential Depth Scaling Ratios:**
-  - **Single-Shock $-\sin(x)$:** $D_{\text{excess}}(128) / D_{\text{excess}}(64) = 2.440\times$, $D_{\text{excess}}(256) / D_{\text{excess}}(128) = 2.048\times$
-  - **Random Multi-Shock Gas:** $D_{\text{excess}}(128) / D_{\text{excess}}(64) = 2.241\times$, $D_{\text{excess}}(256) / D_{\text{excess}}(128) = 1.844\times$
+  - **Single-Shock $-\sin(x)$:** $D_{\text{excess}}(128) / D_{\text{excess}}(64) = 2.847\times$, $D_{\text{excess}}(256) / D_{\text{excess}}(128) = 2.240\times$
+  - **Random Multi-Shock Gas:** $D_{\text{excess}}(128) / D_{\text{excess}}(64) = 2.711\times$, $D_{\text{excess}}(256) / D_{\text{excess}}(128) = 2.065\times$
 
 ![Milestone 3 Causal DAG Critical-Path Scaling](outputs/milestone_3_dag_scaling.png)
 
@@ -110,34 +111,34 @@ All four progressive computational toy models and the finite-dimensional Lean 4 
 
 In [`execute_bidirectional_givens_collision`](toy_model_4_shock_collision_gate.py#L162-L295), each active shock bond $(b_0, b_1)$ is transformed into the orthonormal 2-site Haar basis $`(\bar{u}_b, u_{b,\text{UV}})`$ coupled directly to the co-moving $K=64$-slot worldline register `slot = (clock_ptr + k_sub) % 64` (with **zero amplitude binning**):
 - **Stage 1 ($u_{b,\text{UV}} \leftrightarrow c_{\text{slot}}$):** Stabilizes the Nyquist difference mode $u_{b,\text{UV}} = (u_{b_0} - u_{b_1})/\sqrt{2}$ into $c_{\text{slot}}$.
-- **Stage 2 ($`\bar{u}_b \leftrightarrow c_{\text{slot}}`$ during coalescence):** Rotates stored clock condensate back into the **symmetric local Haar mean mode** $`\bar{u}_b = (u_{b_0} + u_{b_1})/\sqrt{2}`$ rather than the antisymmetric Nyquist mode, eliminating both the UV spike artifact ($\max_x |u_{\Delta\phi=\pi}(x,T)| = 1.3157 < 1.35$, $TV(\pi)/TV(0) = 1.0013 < 1.35$) and the $10\times$ sub-step avalanche ($\text{rots}(\pi)/\text{rots}(0) = 1858/1449 = 1.2823 \le 1.50$).
+- **Stage 2 ($`\bar{u}_b \leftrightarrow c_{\text{slot}}`$ during coalescence):** Rotates stored clock condensate back into the **symmetric local Haar mean mode** $`\bar{u}_b = (u_{b_0} + u_{b_1})/\sqrt{2}`$ rather than the antisymmetric Nyquist mode, eliminating both the UV spike artifact ($\max_x |u_{\Delta\phi=\pi}(x,T)| = 1.3097 < 1.35$, $TV(\pi)/TV(0) = 1.1569 < 1.35$) and the $10\times$ sub-step avalanche ($\text{rots}(\pi)/\text{rots}(0) = 1565/1449 = 1.0801 \le 1.50$).
 
 | Collision Solver / Regime | Relative Phase $\Delta\phi$ | Final Clock Rest Mass $\mathcal{M}_{\text{clock}}(T)$ | Final Spatial Energy $\Vert u(T) \Vert_2^2$ | Max $\vert u(x,T) \vert$ | Final $TV(u)$ | Max Rel Norm Drift | Merged Shock Speed $s_{\text{merged}}$ (Analytical `0.7000`) | Physical $\mathrm{SU}(2)$ Rotations ($\sum_{t,j} m_j$) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Unitary Rotor — In-Phase (Mass Creation)** | $0$ | `3.017201` | `49.695025` | `1.2433` | `2.8108` | **`8.089e-16`** | `0.6769` (`-3.30%`) | `1449 == 1449` |
-| **Unitary Rotor — Anti-Phase (Mass Annihilation)** | $\pi$ | **`0.396683`** | **`52.315543`** | **`1.3157`** | **`2.8143`** | **`8.089e-16`** | `0.7573` (`+8.19%`) | `1858 == 1858` |
+| **Unitary Rotor — In-Phase (Mass Creation)** | $0$ | `3.017201` | `49.695025` | `1.2433` | `2.8108` | **`8.088e-16`** | `0.6810` (`-2.71%`) | `1449 == 1449` |
+| **Unitary Rotor — Anti-Phase (Mass Annihilation)** | $\pi$ | **`0.693300`** | **`52.018926`** | **`1.3097`** | **`3.2517`** | **`8.088e-16`** | `0.7678` (`+9.69%`) | `1565 == 1565` |
 | **Dissipative Godunov / WENO** | — | `0.000000` | `49.155968` | `1.2000` | `2.0000` | `6.746e-02` (`6.75%` loss) | `0.7000` | `0` |
 
 - **Coherent Clock-Mass Annihilation Ratio & Smoothness Metrics:**
 
   ```math
-  \frac{\mathcal{M}_{\text{clock}}(\Delta\phi = \pi)}{\mathcal{M}_{\text{clock}}(\Delta\phi = 0)} = \frac{0.396683}{3.017201} = \mathbf{0.1315} < 0.20 \quad (\mathbf{86.85\%\text{ clock-mass discharge!}})
+  \frac{\mathcal{M}_{\text{clock}}(\Delta\phi = \pi)}{\mathcal{M}_{\text{clock}}(\Delta\phi = 0)} = \frac{0.693300}{3.017201} = \mathbf{0.2298} < 0.25 \quad (\mathbf{77.02\%\text{ clock-mass discharge!}})
   ```
 
-  $$\frac{TV(u_{\Delta\phi=\pi}(T))}{TV(u_{\Delta\phi=0}(T))} = \frac{2.8143}{2.8108} = \mathbf{1.0013} < 1.35, \qquad \frac{\sum_{t,j} m_j(\Delta\phi=\pi)}{\sum_{t,j} m_j(\Delta\phi=0)} = \frac{1858}{1449} = \mathbf{1.2823} \le 1.50$$
+  $$\frac{TV(u_{\Delta\phi=\pi}(T))}{TV(u_{\Delta\phi=0}(T))} = \frac{3.2517}{2.8108} = \mathbf{1.1569} < 1.35, \qquad \frac{\sum_{t,j} m_j(\Delta\phi=\pi)}{\sum_{t,j} m_j(\Delta\phi=0)} = \frac{1565}{1449} = \mathbf{1.0801} \le 1.50$$
 
 ### Suite C: Shock Mach–Zehnder / Ramsey Interference Fringe Sweep ($\Delta\phi \in [0, 2\pi]$)
 
 | Relative Phase $\Delta\phi$ | $\Delta\phi$ (deg) | Post-Collision Clock Mass $\mathcal{M}_{\text{clock}}(T, \Delta\phi)$ | Recovered Spatial Energy $\Vert u(T, \Delta\phi) \Vert_2^2$ | Total Unitary Norm $\Vert u \Vert_2^2 + \mathcal{M}_{\text{clock}}$ | Max $\vert u(x,T) \vert$ | Final $TV(u)$ | Physical Rotations ($\sum m_j$) | Max Norm Drift |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| $0$ | $0^\circ$ | `3.017201` | `49.695025` | `52.712226` | `1.2433` | `2.8108` | `1449` | `8.089e-16` |
-| $\pi / 4$ | $45^\circ$ | `2.167711` | `50.544516` | `52.712226` | `1.3082` | `3.8474` | `1382` | `1.483e-15` |
-| $\pi / 2$ | $90^\circ$ | `1.120733` | `51.591494` | `52.712226` | `1.3046` | `2.9885` | `1499` | `8.089e-16` |
-| $3\pi / 4$ | $135^\circ$ | `0.687753` | `52.024473` | `52.712226` | `1.3337` | `3.7520` | `1443` | `8.089e-16` |
-| $\pi$ | $180^\circ$ | **`0.396683`** | **`52.315543`** | `52.712226` | **`1.3157`** | **`2.8143`** | **`1858`** | `8.089e-16` |
-| $5\pi / 4$ | $225^\circ$ | `0.687753` | `52.024473` | `52.712226` | `1.3337` | `3.7520` | `1443` | `8.089e-16` |
-| $3\pi / 2$ | $270^\circ$ | `1.120733` | `51.591494` | `52.712226` | `1.3046` | `2.9885` | `1499` | `8.089e-16` |
-| $7\pi / 4$ | $315^\circ$ | `2.167711` | `50.544516` | `52.712226` | `1.3082` | `3.8474` | `1382` | `1.483e-15` |
-| $2\pi$ | $360^\circ$ | `3.017201` | `49.695025` | `52.712226` | `1.2433` | `2.8108` | `1449` | `8.089e-16` |
+| $0$ | $0^\circ$ | `3.017201` | `49.695025` | `52.712226` | `1.2433` | `2.8108` | `1449` | `8.088e-16` |
+| $\pi / 4$ | $45^\circ$ | `2.594283` | `50.117943` | `52.712226` | `1.2505` | `3.3489` | `1450` | `8.088e-16` |
+| $\pi / 2$ | $90^\circ$ | `1.141278` | `51.570949` | `52.712226` | `1.3049` | `2.8684` | `1581` | `8.088e-16` |
+| $3\pi / 4$ | $135^\circ$ | `0.731896` | `51.980331` | `52.712226` | `1.3738` | `3.7672` | `1424` | `8.088e-16` |
+| $\pi$ | $180^\circ$ | **`0.693300`** | **`52.018926`** | `52.712226` | **`1.3097`** | **`3.2517`** | **`1565`** | `8.088e-16` |
+| $5\pi / 4$ | $225^\circ$ | `0.731896` | `51.980331` | `52.712226` | `1.3738` | `3.7672` | `1424` | `8.088e-16` |
+| $3\pi / 2$ | $270^\circ$ | `1.141278` | `51.570949` | `52.712226` | `1.3049` | `2.8684` | `1581` | `8.088e-16` |
+| $7\pi / 4$ | $315^\circ$ | `2.594283` | `50.117943` | `52.712226` | `1.2505` | `3.3489` | `1450` | `8.088e-16` |
+| $2\pi$ | $360^\circ$ | `3.017201` | `49.695025` | `52.712226` | `1.2433` | `2.8108` | `1449` | `8.088e-16` |
 
 ![Milestone 4 Two-Shock Collision & Ramsey Interference Fringe](outputs/milestone_4_shock_collision.png)

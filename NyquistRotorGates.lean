@@ -2,28 +2,34 @@ import UnitaryBandwidthDepth
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 
 /-!
-# Phase A (Extensions 2 & 3A): SU(2) Givens Rotors, π-Rotor Negation, Pauli Blockade & Tripartite Haar Routing (`NyquistRotorGates.lean`)
+# Phase A (Extensions 2 & 3A): SU(2) Givens Rotors, π-Rotor Negation, Two-Level Rabi Saturation & Tripartite Haar Routing (`NyquistRotorGates.lean`)
 
 Extends `UnitaryBandwidthDepth.lean` with machine-checked formal proofs for:
-1. **2×2 Complex-Phase SU(2) Givens Rotors on `BlockIdx 1 1` (`givensRotor`)**:
+1. **2×2 Complex-Phase SU(2) Givens Rotors on `BlockIdx 1 1` (`givensRotor`) & Multi-Wire Embedding (`embeddedGivensRotor`)**:
    - Defined directly on `BlockIdx 1 1 = Fin 1 ⊕ Fin 1` (`Sum.inl 0` = spatial UV mode `u_UV ∈ V_Λ`,
-     `Sum.inr 0` = orthogonal clock wire `c ∈ V_Λ^⊥`) via `Matrix.fromBlocks`.
+     `Sum.inr 0` = orthogonal clock wire `c ∈ V_Λ^⊥`) via `Matrix.fromBlocks`, and embedded into
+     arbitrary `BlockIdx d m` (`s : Fin d, c : Fin m`) via `embeddedGivensRotor`.
    - Exact unitarity `givensRotor_mem_unitaryGroup` (`Gᴴ * G = 1` and `G * Gᴴ = 1`).
-   - Direct compatibility with Phase 5's `IsElementaryClockGate`: `givensRotor_isElementaryClockGate`.
+   - Direct compatibility with Phase 5's `IsElementaryClockGate` both on `BlockIdx 1 1`
+     (`givensRotor_isElementaryClockGate`) and non-vacuously for arbitrary `d, m` on `BlockIdx d m`
+     (`embeddedGivensRotor_isElementaryClockGate`).
    - Constructive in-phase clock-mass creation (`Δϕ = 0`, `ζ = 1`):
-     `givensRotor ϑ₂ 1 * givensRotor ϑ₁ 1 = givensRotor (ϑ₁ + ϑ₂) 1`.
+     `givensRotor ϑ₂ 1 * givensRotor ϑ₁ 1 = givensRotor (ϑ₁ + ϑ₂) 1`, inductive multi-step
+     composition `givensRotor_list_prod_in_phase`, and the single-bond sub-stepping bound
+     `single_bond_angle_substepping_bound` (`Θ ≤ L.length * ϑ_max`).
    - Coherent anti-phase clock-mass annihilation / logical negation (`¬`) gate (`Δϕ = π`, `ζ = -1`):
-     `givensRotor ϑ (-1) * givensRotor ϑ 1 = 1` (evading the Monotone Planar CVP `NC³` trap).
+     `givensRotor ϑ (-1) * givensRotor ϑ 1 = 1` (breaking dissipative monotonicity).
    - Shock Mach–Zehnder / Ramsey interference fringe formula (`givensRotor_ramsey_fringe_entry`):
      the net UV-to-clock forward leakage after two pulses is `(1 + ζ) sin ϑ cos ϑ`.
-2. **Pauli Exclusion Blockade on 1D Clock Wires**:
-   - `pauli_saturation_reflection`: When a 1D clock wire is driven to saturation at `ϑ = π / 2`
-     (`sin(π/2) = 1, cos(π/2) = 0`), a second in-phase `π / 2` pulse cannot compress additional
-     amplitude into the clock wire (`forwardLeakage = 0` at `2 * (π / 2) = π`).
-   - `pauli_exclusion_blockade_ker_finrank`: By `rank_forwardLeakage_le_one_of_isElementaryClockGate`
-     and rank-nullity, any elementary 1D clock gate `IsElementaryClockGate d m c W` has
-     `finrank (ker (forwardLeakage P W)) ≥ d + m - 1`, forbidding simultaneous compression of two
-     independent spatial UV modes into a single clock wire.
+2. **Two-Level Rabi Saturation & Rank-1 Channel Capacity Bottleneck**:
+   - `rabi_overrotation_reflection` (alias `pauli_saturation_reflection`): When a 2×2 clock wire is
+     driven to full inversion at `ϑ = π / 2` (`sin(π/2) = 1, cos(π/2) = 0`), a second in-phase
+     `π / 2` pulse over-rotates the two-level system back to `2 * (π / 2) = π` (`forwardLeakage = 0`),
+     reflecting the amplitude back into the spatial channel with phase `-1`.
+   - `rank_one_channel_ker_finrank` (alias `pauli_exclusion_blockade_ker_finrank`): By
+     `rank_forwardLeakage_le_one_of_isElementaryClockGate` and rank-nullity, any elementary 1D clock
+     gate `IsElementaryClockGate d m c W` has `finrank (ker (forwardLeakage P W)) ≥ d + m - 1`,
+     forbidding simultaneous compression of two independent spatial UV modes into a single clock wire.
 3. **Milestone 4 Tripartite 3-Mode Haar Router `(ū_b, u_{b,UV}, c_slot)` (`TripartiteIdx`)**:
    - Formalizes the 3-mode subspace `Fin 1 ⊕ BlockIdx 1 1` (`ū_b ⊕ u_{b,UV} ⊕ c_slot`), proving
      exact unitarity of Stage 1 (`u_{b,UV} ↔ c_slot`), Stage 2 (`ū_b ↔ c_slot`), and their composite
@@ -175,6 +181,45 @@ theorem givensRotor_isElementaryClockGate (ϑ : ℝ) (ζ : ℂ) :
   fin_cases i
   exact False.elim (hi rfl)
 
+/-- General multi-wire embedding of a 2×2 Givens rotor onto spatial mode `s : Fin d` and
+    clock wire `c : Fin m` inside `BlockIdx d m = Fin d ⊕ Fin m` for arbitrary `d, m : ℕ`. -/
+def embeddedGivensRotor (d m : ℕ) (s : Fin d) (c : Fin m) (ϑ : ℝ) (ζ : ℂ) :
+    Matrix (BlockIdx d m) (BlockIdx d m) ℂ :=
+  Matrix.fromBlocks
+    (Matrix.of fun i j : Fin d =>
+      if i = s ∧ j = s then (Real.cos ϑ : ℂ) else if i = j then 1 else 0)
+    (Matrix.of fun i : Fin d => fun j : Fin m =>
+      if i = s ∧ j = c then -star ζ * (Real.sin ϑ : ℂ) else 0)
+    (Matrix.of fun i : Fin m => fun j : Fin d =>
+      if i = c ∧ j = s then ζ * (Real.sin ϑ : ℂ) else 0)
+    (Matrix.of fun i j : Fin m =>
+      if i = c ∧ j = c then (Real.cos ϑ : ℂ) else if i = j then 1 else 0)
+
+/-- **Non-Vacuous Multi-Wire `IsElementaryClockGate` Theorem (`embeddedGivensRotor_isElementaryClockGate`)**:
+    For any spatial dimension `d`, clock-register dimension `m` (including `m ≥ 2`), spatial mode
+    `s : Fin d`, and target clock wire `c : Fin m`, `embeddedGivensRotor d m s c ϑ ζ` satisfies
+    `IsElementaryClockGate d m c`, because its UV-to-bandlimit block `W₂₁` vanishes on all rows `i ≠ c`. -/
+theorem embeddedGivensRotor_isElementaryClockGate
+    (d m : ℕ) (s : Fin d) (c : Fin m) (ϑ : ℝ) (ζ : ℂ) :
+    IsElementaryClockGate d m c (embeddedGivensRotor d m s c ϑ ζ) := by
+  intro i hi col
+  unfold forwardLeakage embeddedGivensRotor
+  rw [← uvProj_eq_one_sub_bandlimitProj d m]
+  unfold uvProj bandlimitProj
+  simp only [Matrix.fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add,
+    Matrix.one_mul, Matrix.mul_one]
+  cases col with
+  | inl j =>
+    simp [Matrix.fromBlocks_apply₂₁, hi]
+  | inr j =>
+    simp [Matrix.fromBlocks_apply₂₂]
+
+/-- Identity rotor at zero angle: `givensRotor 0 1 = 1`. -/
+@[simp]
+theorem givensRotor_zero : givensRotor 0 1 = 1 := by
+  unfold givensRotor
+  simp [Real.cos_zero, Real.sin_zero, Matrix.fromBlocks_one]
+
 /-- **In-Phase Constructive Clock-Mass Creation (`Δϕ = 0`, `ζ = 1`)**:
     Two sequential in-phase Givens rotations add their angles coherently:
     `givensRotor ϑ₂ 1 * givensRotor ϑ₁ 1 = givensRotor (ϑ₁ + ϑ₂) 1`. -/
@@ -211,6 +256,47 @@ theorem givensRotor_in_phase_double (ϑ : ℝ) :
   rw [two_mul]
   exact givensRotor_in_phase_mul ϑ ϑ
 
+/-- **Inductive Single-Bond In-Phase Sub-Stepping Product (`givensRotor_list_prod_in_phase`)**:
+    Any sequential list `angles : List ℝ` of in-phase Givens rotations on a single shock bond
+    composes to the single Givens rotation `givensRotor angles.sum 1` with total angle `angles.sum`. -/
+theorem givensRotor_list_prod_in_phase (angles : List ℝ) :
+    (angles.map (fun ϑ => givensRotor ϑ 1)).prod = givensRotor angles.sum 1 := by
+  induction angles with
+  | nil =>
+    simp [givensRotor_zero]
+  | cons ϑ tail ih =>
+    rw [List.map_cons, List.prod_cons, ih, givensRotor_in_phase_mul, List.sum_cons, add_comm]
+
+/-- Helper: If every step angle `ϑ ∈ angles` is bounded above by `ϑ_max`, then the cumulative
+    rotation angle `angles.sum` is bounded above by `angles.length * ϑ_max`. -/
+theorem list_sum_le_length_mul (angles : List ℝ) (ϑ_max : ℝ)
+    (h_step : ∀ ϑ ∈ angles, ϑ ≤ ϑ_max) :
+    angles.sum ≤ (angles.length : ℝ) * ϑ_max := by
+  induction angles with
+  | nil =>
+    simp
+  | cons a tail ih =>
+    have ha : a ≤ ϑ_max := h_step a List.mem_cons_self
+    have htail : tail.sum ≤ (tail.length : ℝ) * ϑ_max :=
+      ih (fun ϑ hϑ => h_step ϑ (List.mem_cons_of_mem a hϑ))
+    simp only [List.sum_cons, List.length_cons, Nat.cast_add, Nat.cast_one]
+    linarith
+
+/-- **Single-Bond Sequential Sub-Stepping Lower Bound (`single_bond_angle_substepping_bound`)**:
+    When a single shock bond must accumulate a target rotation angle `Θ` (`Θ ≤ angles.sum`) using
+    elementary in-phase Givens gates whose individual rotation angle per clock tick is bounded by
+    `ϑ ≤ ϑ_max`, the sequential gate count `angles.length` satisfies `Θ ≤ angles.length * ϑ_max`
+    (i.e. `angles.length ≥ ⌈Θ / ϑ_max⌉`), complementing the multi-wire rank bound of
+    `UnitaryBandwidthDepth.lean`. -/
+theorem single_bond_angle_substepping_bound
+    (angles : List ℝ) (Θ ϑ_max : ℝ)
+    (h_step : ∀ ϑ ∈ angles, ϑ ≤ ϑ_max)
+    (h_target : Θ ≤ angles.sum) :
+    (angles.map (fun ϑ => givensRotor ϑ 1)).prod = givensRotor angles.sum 1 ∧
+    Θ ≤ (angles.length : ℝ) * ϑ_max :=
+  ⟨givensRotor_list_prod_in_phase angles,
+   le_trans h_target (list_sum_le_length_mul angles ϑ_max h_step)⟩
+
 /-- **Anti-Phase Coherent Clock-Mass Annihilation / Logical Negation (`¬`) Gate (`Δϕ = π`, `ζ = -1`)**:
     When a second shock arrives with relative rotor phase `Δϕ = π` (`ζ = e^{iπ} = -1`),
     `givensRotor ϑ (-1) * givensRotor ϑ 1 = 1`, discharging 100% of the clock state back into
@@ -240,14 +326,14 @@ theorem givensRotor_ramsey_fringe_entry (ϑ : ℝ) (ζ : ℂ) :
   simp only [star_one, scalarMat1_mul, scalarMat1_add, Matrix.fromBlocks_apply₂₁, scalarMat1_apply]
   ring
 
-/-! ### 2. Pauli Exclusion Blockade on 1D Clock Wires -/
+/-! ### 2. Two-Level Rabi Saturation & Rank-1 Channel Capacity Bottleneck -/
 
-/-- **Pauli Saturation Reflection at `ϑ = π / 2`**:
-    When a 1D clock wire is driven to full saturation by a `ϑ = π / 2` rotation, applying a
+/-- **Two-Level Rabi Over-Rotation Reflection at `ϑ = π / 2` (`rabi_overrotation_reflection`)**:
+    When a 2×2 clock wire is driven to full inversion by a `ϑ = π / 2` rotation, applying a
     second in-phase `π / 2` rotation (`givensRotor (π/2) 1 * givensRotor (π/2) 1 = givensRotor π 1`)
-    has zero net UV-to-clock transfer (`(Sum.inr 0, Sum.inl 0) = 0`) and reflects the amplitude
-    back into the spatial channel with phase `-1`. -/
-theorem pauli_saturation_reflection :
+    over-rotates the two-level system back to zero net UV-to-clock transfer (`(Sum.inr 0, Sum.inl 0) = 0`)
+    and reflects the amplitude back into the spatial channel with phase `-1`. -/
+theorem rabi_overrotation_reflection :
     (givensRotor (Real.pi / 2) 1 * givensRotor (Real.pi / 2) 1) (Sum.inr 0) (Sum.inl 0) = 0 ∧
     (givensRotor (Real.pi / 2) 1 * givensRotor (Real.pi / 2) 1) (Sum.inl 0) (Sum.inl 0) = -1 := by
   rw [givensRotor_in_phase_mul]
@@ -256,13 +342,19 @@ theorem pauli_saturation_reflection :
   unfold givensRotor
   simp [Real.sin_pi, Real.cos_pi]
 
-/-- **Pauli Exclusion Blockade via Rank-Nullity on `BlockIdx d m`**:
+/-- Backward-compatible alias for `rabi_overrotation_reflection`. -/
+theorem pauli_saturation_reflection :
+    (givensRotor (Real.pi / 2) 1 * givensRotor (Real.pi / 2) 1) (Sum.inr 0) (Sum.inl 0) = 0 ∧
+    (givensRotor (Real.pi / 2) 1 * givensRotor (Real.pi / 2) 1) (Sum.inl 0) (Sum.inl 0) = -1 :=
+  rabi_overrotation_reflection
+
+/-- **Rank-1 Channel Capacity Bottleneck via Rank-Nullity on `BlockIdx d m` (`rank_one_channel_ker_finrank`)**:
     For any elementary 1D clock gate `W` satisfying `IsElementaryClockGate d m c W`,
     the forward leakage operator `forwardLeakage (bandlimitProj d m) W` has rank at most `1`,
     so its kernel has dimension at least `(d + m) - 1`:
     `d + m ≤ Module.finrank ℂ (LinearMap.ker (forwardLeakage (bandlimitProj d m) W).mulVecLin) + 1`.
-    Consequently, at most a single 1D spatial channel can compress into wire `c` per step. -/
-theorem pauli_exclusion_blockade_ker_finrank
+    Consequently, at most a single 1D spatial channel can couple into wire `c` per elementary step. -/
+theorem rank_one_channel_ker_finrank
     (d m : ℕ) (c : Fin m) (W : Matrix (BlockIdx d m) (BlockIdx d m) ℂ)
     (hGate : IsElementaryClockGate d m c W) :
     d + m ≤
@@ -275,6 +367,14 @@ theorem pauli_exclusion_blockade_ker_finrank
     simp [BlockIdx, Fintype.card_sum, Fintype.card_fin]
   dsimp [Matrix.rank] at hRank
   omega
+
+/-- Backward-compatible alias for `rank_one_channel_ker_finrank`. -/
+theorem pauli_exclusion_blockade_ker_finrank
+    (d m : ℕ) (c : Fin m) (W : Matrix (BlockIdx d m) (BlockIdx d m) ℂ)
+    (hGate : IsElementaryClockGate d m c W) :
+    d + m ≤
+      Module.finrank ℂ (LinearMap.ker (forwardLeakage (bandlimitProj d m) W).mulVecLin) + 1 :=
+  rank_one_channel_ker_finrank d m c W hGate
 
 /-! ### 3. Milestone 4 Tripartite 3-Mode Haar Router `(ū_b, u_{b,UV}, c_slot)` -/
 

@@ -1,33 +1,43 @@
-import UnitaryBandwidthDepth
 import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.FieldSimp
 
 /-!
-# Phase A (Extension 1): Landau–Ginzburg–Higgs & Nyquist Horizon Criticality (`NyquistHiggsDuality.lean`)
+# Phase A (Extension 1): Ginzburg–Landau Defect Condensate & Nyquist Horizon Criticality (`NyquistHiggsDuality.lean`)
 
-Formalizes the structural duality between the Landau–Ginzburg–Higgs mechanism
-(`Physlib.Particles.StandardModel.HiggsBoson.Potential`) and the Bekenstein–Nyquist
-worldline clock fiber (Monograph Section 4.5.3, Equations 19–20, and Table 9):
+Formalizes the localized Ginzburg–Landau shock-core defect condensate potential
+`V_eff(|c|²) = σ₀ |c|² + λ |c|⁴` and its algebraic isomorphism with the quartic Higgs potential
+(`Physlib.Particles.StandardModel.HiggsBoson.Potential`) across the Bekenstein–Nyquist
+worldline clock fiber (Monograph Section 4.4.3, Equations 19–20, and Table 6):
+
+- **Physical Interpretation (Localized Defect Condensate vs. Translation-Invariant Vacuum):**
+  In the Bekenstein–Nyquist lattice, the bare saturation margin `σ₀(x,t) = 1 - F₀(x,t) / (Λ_Bek * ν_ML)`
+  is positive (`σ₀ > 0`) throughout the smooth sub-Nyquist bulk (where the equilibrium clock
+  register norm is zero, `|c_eq|² = 0`) and becomes negative (`σ₀ < 0`) strictly inside localized,
+  over-steepened shock cores where nonlinear spectral flux exceeds `Λ_Bek * ν_ML`. Within a shock
+  core, transferring norm `|c|²` into the clock register linearly relieves the spatial overload,
+  generating a localized Ginzburg–Landau defect condensate `|c_eq|² = -σ₀ / (2λ) > 0` whose quartic
+  free-energy polynomial is algebraically isomorphic to `StandardModel.HiggsField.Potential.toFun`
+  under `μ² = -σ₀`.
 
 1. `HiggsPotential`: Exact mirror of `StandardModel.HiggsField.Potential` in `Physlib`
    (`- P.μ2 * normSq + P.𝓵 * normSq * normSq`), along with `complete_square`,
    `pos_𝓵_lower_bound`, and `minimum_iff_normSq_eq`.
 2. `toHiggsPotential`: Explicit sign-convention bridge `μ2 := -σ₀, 𝓵 := lam` mapping the
    Bekenstein–Nyquist Saturation Functional `σ₀(x,t) = 1 - F₀(x,t) / (Λ_Bek * ν_ML)` to
-   `Physlib`'s quadratic Higgs mass parameter.
+   `Physlib`'s quadratic mass parameter.
 3. `saturation_linear_relaxation`: Formal proof that linear commutator defect absorption
    `F(|c|²) = F₀ - κ |c|²` shifts the saturation functional to `Σ(|c|²) = σ₀ + 2 λ |c|²`
    with `λ = κ / (2 Λ_Bek ν_ML)`.
-4. `subNyquist_unique_minimum_zero`: In the sub-Nyquist elliptic bulk (`σ₀ > 0, λ > 0`),
+4. `subNyquist_unique_minimum_zero`: In the sub-Nyquist bulk (`σ₀ > 0, λ > 0`),
    the unique global minimum on `c_normSq ≥ 0` is `c_normSq = 0` (`m_j = 0`).
-5. `superNyquist_condensate_minimum` & `superNyquist_horizon_restoration`: In the super-Nyquist
-   hyperbolic shock core (`σ₀ < 0, λ > 0`), symmetry breaks to the strictly positive equilibrium
-   clock condensate `c_eq² = -σ₀ / (2λ) > 0`, which restores the effective Tricomi–Keldysh symbol
-   to the critical Sonic/Nyquist Horizon `Σ(c_eq²) = σ₀ + 2λ c_eq² = 0`.
+5. `superNyquist_condensate_minimum` & `superNyquist_horizon_restoration`: Inside an overloaded
+   super-Nyquist shock core (`σ₀ < 0, λ > 0`), the unexcited state `c = 0` relaxes to the strictly
+   positive defect-condensate norm `c_eq² = -σ₀ / (2λ) > 0`, which restores the effective saturation
+   margin to the critical Sonic/Nyquist Horizon `Σ(c_eq²) = σ₀ + 2λ c_eq² = 0`.
 6. `quarticCoupling_cutoff_independent`: Proves that under Paley–Wiener linear scaling
-   `κ = c₁ Λ_Bek` and `θ_Nyq = Λ_Bek ν_ML`, the quartic Higgs–Nyquist coupling `λ = c₁ / (2 ν_ML)`
+   `κ = c₁ Λ_Bek` and `θ_Nyq = Λ_Bek ν_ML`, the quartic coupling `λ = c₁ / (2 ν_ML)`
    is strictly independent of the ultraviolet cutoff `Λ_Bek`.
 -/
 

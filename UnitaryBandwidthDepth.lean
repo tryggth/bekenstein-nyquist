@@ -21,6 +21,13 @@ Conjecture (Phase 1 & Phase 5):
    commutator rank identity `rank([P_Lambda, U]) = rank(A) + rank(B) = 2r`.
 5. Complete inductive proofs of `unitary_bandwidth_depth_tradeoff` (isometric agreement) and
    `unitary_bandwidth_depth_tradeoff_compression` (block-compression dilation agreement).
+   - **Multi-Wire Gate Count vs. Single-Bond Angle Sub-Stepping:** In this module, `L.length ≥ r`
+     bounds the total number of elementary rank-1 clock-coupling gates (`L.length`) by the
+     **spatial leakage rank** `r = rank((1 - P) U_nl P)` across independent spatial modes/wires.
+     At a single shock bond where `r = 1`, rank subadditivity alone gives `L.length ≥ 1`; the
+     multi-step sequential sub-stepping `L.length ≥ ⌈Θ / ϑ_max⌉` at a single bond under a bounded
+     per-step rotation angle `0 < ϑ ≤ ϑ_max` is formalized in `NyquistRotorGates.lean`
+     (`givensRotor_list_prod_in_phase` and `single_bond_angle_substepping_bound`).
 -/
 
 noncomputable section
@@ -138,6 +145,35 @@ theorem forwardLeakage_mul_rank_le
   rw [one_sided_leakage_decomposition P W U hP]
   refine le_trans (matrix_rank_add_le _ _) ?_
   exact add_le_add (Matrix.rank_mul_le_left _ _) (Matrix.rank_mul_le_right _ _)
+
+/-- **Mori–Zwanzig 2-Step Markovian Prediction Defect Identity**:
+    For any idempotent compression projector `P * P = P` and evolution operators `W, U`,
+    the non-Markovian prediction defect `P * (W * U) * P - (P * W * P) * (P * U * P)`
+    equals the product of the reverse leakage of `W` and the forward leakage of `U`:
+    `reverseLeakage P W * forwardLeakage P U = (P * W * (1 - P)) * ((1 - P) * U * P)`. -/
+theorem mori_zwanzig_markov_defect_eq_reverse_mul_forward
+    (P W U : Matrix n n ℂ) (hP : P * P = P) :
+    P * (W * U) * P - (P * W * P) * (P * U * P) =
+      reverseLeakage P W * forwardLeakage P U := by
+  have hQ := one_sub_idem hP
+  unfold reverseLeakage forwardLeakage
+  calc
+    P * (W * U) * P - (P * W * P) * (P * U * P)
+      = P * W * 1 * U * P - (P * W * P) * (P * U * P) := by simp [Matrix.mul_assoc]
+    _ = P * W * (P * P + (1 - P) * (1 - P)) * U * P - (P * W * P) * (P * U * P) := by
+      rw [hP, hQ, add_sub_cancel]
+    _ = (P * W * (1 - P)) * ((1 - P) * U * P) := by
+      noncomm_ring
+
+/-- **Mori–Zwanzig Memory Rank Bound**:
+    The rank of the 2-step non-Markovian prediction defect is bounded above by both
+    the forward Stinespring leakage rank of `U` and the reverse leakage rank of `W`. -/
+theorem mori_zwanzig_markov_defect_rank_le
+    (P W U : Matrix n n ℂ) (hP : P * P = P) :
+    (P * (W * U) * P - (P * W * P) * (P * U * P)).rank ≤ (forwardLeakage P U).rank ∧
+    (P * (W * U) * P - (P * W * P) * (P * U * P)).rank ≤ (reverseLeakage P W).rank := by
+  rw [mori_zwanzig_markov_defect_eq_reverse_mul_forward P W U hP]
+  exact ⟨Matrix.rank_mul_le_right _ _, Matrix.rank_mul_le_left _ _⟩
 
 /-! ### Commutator Rank Additivity and Unitary Gram / Dilation Identities -/
 
@@ -458,7 +494,10 @@ theorem unitary_bandwidth_depth_tradeoff
 /-- **Phase 5 Stronger Block-Compression Dilation Theorem (`unitary_bandwidth_depth_tradeoff_compression`)**:
     Even if `circuitProduct L` only matches the compressed low-frequency block
     `P * (circuitProduct L) * P = P * U_nl.val * P`, unitarity forces
-    `rank((1 - P) (circuitProduct L) P) = rank((1 - P) U_nl P)`, so `L.length ≥ r` still holds! -/
+    `rank((1 - P) (circuitProduct L) P) = rank((1 - P) U_nl P)`, so `L.length ≥ r` still holds!
+    Note: this theorem bounds the total gate count `L.length` by the spatial leakage rank `r`.
+    For single-bond sequential sub-stepping where `r = 1` and each step has bounded angle `ϑ ≤ ϑ_max`,
+    see `single_bond_angle_substepping_bound` in `NyquistRotorGates.lean`. -/
 theorem unitary_bandwidth_depth_tradeoff_compression
     (P : Matrix n n ℂ) (hP : P * P = P) (hP_star : Pᴴ = P)
     (U_nl : Matrix.unitaryGroup n ℂ)
